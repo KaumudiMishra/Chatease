@@ -1,0 +1,120 @@
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const { MessagingResponse } = require('twilio').twiml;
+const admin = require('firebase-admin');
+const axios = require('axios');                 // ← NEW: HTTP client for OpenRouter
+
+const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// ── Firebase Admin ───────────────────────────────────────────────
+const serviceAccount = require('./serviceAccountKey.json');
+
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: 'https://nwbot-c2fc9-default-rtdb.asia-southeast1.firebasedatabase.app',
+});
+
+const db = admin.database();
+
+// ── Helper: talk to OpenRouter LLM ───────────────────────────────
+async function getAIReply(userPrompt) {
+  try {
+    const { data } = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'openai/gpt-3.5-turbo',
+        messages: [
+          {
+            role: 'system',
+            content:
+              'You are a concise, polite college information assistant. Reply in 2–3 sentences.',
+          },
+          { role: 'user', content: userPrompt },
+        ],
+        max_tokens: 300,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+          // Optionally add these if required for free keys:
+          // 'HTTP-Referer': 'https://your‑domain.com',
+          // 'X-Title': 'CollegeWhatsAppBot',
+        },
+      }
+    );
+
+    return data.choices[0].message.content.trim();
+  } catch (err) {
+    console.error('❌ OpenRouter error:', err.message);
+    return "⚠️ I'm having trouble answering that right now. Please try again later.";
+  }
+}
+
+// ── Incoming WhatsApp webhook ────────────────────────────────────
+app.post('/incoming', async (req, res) => {
+  const userMsg = (req.body.Body || '').toLowerCase().trim();
+  console.log('📩 Incoming:', userMsg);
+
+  const twiml = new MessagingResponse();
+
+  try {
+    // 1) Try exact key in Firebase
+    const snap = await db.ref(userMsg).once('value');
+
+    if (snap.exists()) {
+      twiml.message(snap.val()); // Found in FAQ DB
+    } else {
+      // 2) Fall back to OpenRouter GPT
+      const aiReply = await getAIReply(userMsg);
+      twiml.message(aiReply);
+    }
+  } catch (fbErr) {
+    console.error('❌ Firebase error:', fbErr);
+    twiml.message('⚠️ Database error. Please try again later.');
+  }
+
+  res.type('text/xml').send(twiml.toString());
+});
+
+// ── Start server ────────────────────────────────────────────────
+app.listen(3000, () => {
+  console.log('🚀 Bot server is running on http://localhost:3000');
+});
+
+
+
+
+
+---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+
+
+
+{
+    "overview": "🌟 Poornima Institute of Engineering & Technology (PIET) is a NAAC-accredited, AICTE-approved RTU-affiliated college in Sitapura, Jaipur (ISI-6, RIICO Institutional Area).",
+    "fees": "💰 B.Tech tuition ₹85,575 / yr + ₹12,835 development + ₹21,395 accreditation ≈ ₹1.19 L per year (total ~₹3.26 L for four years). One-time direct-admission registration ₹1,500.",
+    "hostel_fees": "🏠 Separate boys/girls hostels on campus: non-AC ₹1,05,000 yr, AC ₹1,17,000 yr, single ₹1,25,000 yr. Includes Wi-Fi, RO water, games, gym and 4-meal mess.",
+    "hostel": "Poornima Group hostels namely Gayatri Girls Hostel , Aravali Boys Hostel , Gurushikhar Boys Hostel , Gargi Girls Hostel and Himalaya Boys Hostel are homes to students with residential capacity of 3000 students including 1100 girls and 1900 boys separately. We have a hostel built up of more than a million square feet where students feel at home and safe during any time of the day with utmost safety and security 24/7. All the hostels are constructed keeping in mind the student’s comfort and requirements having all basic facilities to give them good living conditions that are important for their growth.",
+    "mess": "🍽 Hostel mess provides four fresh, nutritious meals daily. Canteen and snack kiosks operate throughout the day.",
+    "transport": "🚌 44-bus fleet (8 Tata + 36 Swaraj) covering 20+ routes within 50 km; free e-carts for on-campus mobility and 24x7 ambulance for emergencies.",
+    "syllabus": "📚 First-year common RTU syllabus; later years branch-specific. Detailed PDFs published on RTU & PIET portals.",
+    "location": "📍 ISI-6, RIICO Institutional Area, Poornima Marg, Sitapura, Jaipur 302022 (Google Maps searchable).",
+    "timing": {
+        "winter": "🕘 8:30 AM - 3:20 PM (Mon-Fri).",
+        "summer": "🕘 8:00 AM - 2:50 PM (Mon-Fri)"
+    },
+    "wifi": "📡 Campus-wide Wi-Fi in academic blocks & hostels. Reviews note occasional speed drops.",
+    "result": "📝 RTU semester results released via RTU portal; PIET notifies students by email/SMS.",
+    "exam_centers": "🏫 End-semester exams held on-campus or at RTU-designated centres; admit cards list exact venue.",
+    "ragging_help": "🚫 Strict anti-ragging cell; helpline numbers posted in hostels & website. Immediate action under AICTE/UGC norms.",
+    "faculty": "👩‍🏫 ~500 Poornima Group faculty; PIET faculty meet AICTE/RTU norms (PhD/MTech). Student reviews cite variable engagement.",
+    "naac_ranking": "🏅 NAAC accredited (Grade B). NBA accreditation for select programmes.",
+    "rtu_ranking": "📊 Frequently ranks top-3 among RTU-affiliated colleges (QIV framework).",
+    "courses": "🎓 B.Tech in CSE, AI & DS, Cyber, IoT, ECE, EE, Mechanical, Civil + lateral entry; also B.Des, BCA, BBA, MBA, Diploma.",
+    "library": "📖 Central library with print & e-journals, research database access, and quiet study hall.",
+    "placements": "💼 2023: Avg package ₹5.4 L; highest ₹12 L. Recruiters include Infosys, SAP Labs, DeltaX, Maersk, Asian Paints. Students report mixed placement support.",
+    "technical_issues": "🔧 IT help-desk handles Wi-Fi/computer issues 9 AM-4 PM via ERP ticket.",
+    "canteen": "☕ On-campus canteen serves snacks & beverages during class hours."
+}

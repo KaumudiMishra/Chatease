@@ -1,0 +1,86 @@
+{
+  "campus": {
+    "syn": ["college","campus","infrastructure","facilities","building","environment","greenery"],
+    "answer": "🏫 PIET’s modern, green campus in Sitapura has spacious classrooms, seminar halls, auditorium, medical centre, digital library, sports courts, gym, running track and 24×7 Wi‑Fi."
+  },
+  "canteen": {
+    "syn": ["canteen"],
+    "answer": "☕ Multiple canteens/kitchens serve fresh, nutritious food for students and staff."
+  },
+  "wifi": {
+    "syn": ["wifi"],
+    "answer": "📡 24×7 Wi‑Fi available in academic blocks and hostels."
+  },
+  "labs": {
+    "syn": ["labs","practical","practicals"],
+    "answer": "🔬 High‑tech laboratories for engineering, computer science and other disciplines provide extensive hands‑on learning."
+  },
+  "location": {
+    "syn": ["location","address"],
+    "answer": "📍 ISI‑6, RIICO Institutional Area, Sitapura, Poornima Marg, Jaipur 302022 (Phone 9828074122, Email president.pu@poornima.edu.in)."
+  },
+  "courses": {
+    "syn": ["course","courses","branch","stream","degree","diploma","btech","mba","mca","bca","mtech","electives","specialization"],
+    "answer": "🎓 UG : B.Tech (CSE, AI, DS, IoT, Civil etc.)  |  PG : M.Tech, MBA, MCA, M.Plan, M.Design, MPH, MHA  |  Other : BCA, BBA, B.Com, B.Sc, B.Arch, B.Des, BVA, BA, Diploma, PG Diploma."
+  },
+  "syllabus": {
+    "syn": ["syllabus","subjects","curriculum"],
+    "answer": "📚 Engineering programmes follow RTU‑prescribed syllabus; detailed PDFs available on request."
+  },
+  "admission": {
+    "syn": ["admission","admissions","apply","application","form","registration","process","counselling","cutoff","merit","quota","direct admission","online apply","last date","entrance","exam","jee","eligibility"],
+    "answer": "📝 Apply online/offline (₹1,500). JEE Main via REAP for B.Tech; other courses merit/management quota. 10+2 with PCM ≥45 % for B.Tech."
+  },
+  "fees": {
+    "syn": ["fee","fees","scholarship","refund","loan","installment","payment","hostel fee","exam fee"],
+    "answer": "💰 B.Tech fee ≈ ₹5.5 – 5.6 L total. Hostel fee varies by room and includes mess. Installment & online payment options available."
+  },
+  "faculty": {
+    "syn": ["faculty","teachers","professors","teaching","class","lecture","time table","schedule","period","batch","practical","lab"],
+    "answer": "👩‍🏫 Faculty meet AICTE & RTU standards. Teaching via lectures, practicals, workshops and seminars."
+  },
+  "hostel": {
+    "syn": ["hostel","accommodation","rooms","mess","warden","hostel rules","bed","fan","electricity","curfew"],
+    "answer": "🏠 Spacious rooms (shared/single), 24×7 power, solar hot water, Wi‑Fi, laundry, gym, TV room, guest house and ambulance; curfew enforced."
+  },
+  "placements": {
+    "syn": ["placement","job","package","highest package","average package","company","internship","drive","recruiter","resume","training"],
+    "answer": "💼 Placement cell offers training & drives. Highest pkg ~₹12 L p.a.; average ~₹5.5 L p.a. Recruiters include Infosys, Capgemini, SAP Labs & Asian Paints."
+  },
+  "documents": {
+    "syn": ["document","docs","certificate","marksheet","photo","aadhar","pan","dob","migration","character certificate","verification","identity"],
+    "answer": "🗂️ Required docs: 10th & 12th marksheets, (PG : UG marksheet), photo ID (Aadhar/PAN), migration & character certificates."
+  },
+  "exams_results": {
+    "syn": ["result","semester","session","orientation","reporting","notice","announcement"],
+    "answer": "📝 Exams follow RTU schedule; dates notified in advance. Results published online each semester. Academic calendar lists holidays & orientation."
+  },
+  "transport": {
+    "syn": ["transport","bus","transportation","parking","vehicle"],
+    "answer": "🚌 Shuttle & bus services cover major Jaipur routes; ample parking for personal vehicles."
+  },
+  "events": {
+    "syn": ["event","function","fest","cultural","technical","sports","competition","workshop","seminar","guest lecture","webinar","conference"],
+    "answer": "🎉 Regular technical fests, cultural festivals, sports competitions, workshops, seminars and guest lectures."
+  },
+  "student_life": {
+    "syn": ["student","students","alumni","association","club","society","committee","council","union","representative","leadership"],
+    "answer": "🤝 Active student clubs & societies, leadership roles, and a strong alumni network for mentoring."
+  },
+  "rules": {
+    "syn": ["rules","regulations","guidelines","code of conduct","discipline","attendance","punishment","fine","proctor","anti-ragging","ragging","harassment"],
+    "answer": "📜 Strict code of conduct on attendance & discipline. Zero‑tolerance ragging policy with 24×7 support."
+  },
+  "library": {
+    "syn": ["library","books","reading room","e-library","catalogue","issue","return","membership","library card","reference","journals","magazines","research"],
+    "answer": "📖 Digital & physical library offering online databases, journals, magazines and dedicated reading rooms."
+  },
+  "sports": {
+    "syn": ["sports"],
+    "answer": "🏅 Facilities for cricket, football, badminton, basketball, volleyball and indoor games."
+  },
+  "technical_support": {
+    "syn": ["technical issues","it support","lab maintenance"],
+    "answer": "🔧 IT help‑desk for Wi‑Fi, labs & ERP issues; lab equipment maintained regularly."
+  }
+}
