@@ -59,7 +59,7 @@ Keyword:`;
     const { data } = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'openai/gpt-3.5-turbo',
+        model: 'mistralai/mistral-7b-instruct',
         messages: [{ role: 'user', content: prompt }],
         max_tokens: 3,
         temperature: 0,
@@ -85,7 +85,7 @@ async function getAIReply(prompt) {
     const { data } = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
-        model: 'openai/gpt-3.5-turbo',
+        model: 'mistralai/mistral-7b-instruct',
         messages: [
           {
             role: 'system',
