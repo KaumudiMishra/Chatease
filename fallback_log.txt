@@ -1,0 +1,6 @@
+
+[2025-07-04T07:00:31.556Z]
+User: hi
+Intent: unknown
+GPT: Hello! Welcome to Poornima Institute of Engineering and Technology (PIET), Jaipur. We're glad to have you here. If you have any questions about our college, our programs, or our facilities, feel free to ask. We're happy to help!
+---

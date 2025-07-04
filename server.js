@@ -17,10 +17,11 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 
-// ─── Load FAQ Data ─────────────────────────────────────────
+// ─── Load FAQ Data & Intent Map ────────────────────────────
 const faq = require('./faq.json');
+const intentMap = require('./intentmap');
 
-// Recursively extract all nested keys like "admission.process", "fees.structure"
+// ─── Recursively Extract All Nested Keys ───────────────────
 function extractAllKeys(obj, prefix = '') {
   return Object.keys(obj).flatMap(key => {
     const fullKey = prefix ? `${prefix}.${key}` : key;
@@ -36,12 +37,34 @@ function getNestedAnswer(obj, path) {
   return path.split('.').reduce((o, key) => (o && o[key] ? o[key] : null), obj);
 }
 
+// ─── Match User Message to Intent Map ──────────────────────
+function getIntentResponse(message) {
+  const lowerMessage = message.toLowerCase();
+
+  for (const [intent, synonyms] of Object.entries(intentMap)) {
+    for (const synonym of synonyms) {
+      if (lowerMessage.includes(synonym.toLowerCase())) {
+        const data = faq[intent];
+        if (!data) continue;
+
+        const subMatch = Object.entries(data).find(([key]) =>
+          lowerMessage.includes(key.toLowerCase())
+        );
+        if (subMatch) return subMatch[1];
+
+        return data.about || null;
+      }
+    }
+  }
+
+  return null;
+}
+
 // ─── GPT-based Intent Classifier ───────────────────────────
 async function classifyIntent(userInput) {
   const prompt = `
 You're an intent classifier. From the list below, return the closest matching key (case-insensitive) based on user input.
 Only choose from the list. If no good match, return "unknown".
-
 Valid Keys:
 ${VALID_KEYS.join(', ')}
 
@@ -67,7 +90,6 @@ Matched Key (one of above):`.trim();
 
     let raw = data.choices[0].message.content.trim().toLowerCase();
 
-    // Handle partial or fuzzy matches
     if (!VALID_KEYS.includes(raw)) {
       const match = VALID_KEYS.find(k =>
         k.startsWith(raw) || raw.includes(k) || raw === k.split('.')[0]
@@ -92,20 +114,30 @@ app.post('/incoming', async (req, res) => {
   const intent = await classifyIntent(userMsg);
   console.log(`🧠 Intent Detected: ${intent}`);
 
-  let response = getNestedAnswer(faq, intent);
+  let response = getIntentResponse(userMsg) || getNestedAnswer(faq, intent);
+
+  if (response) {
+    console.log(`✅ Matched via static response.`);
+  }
 
   if (!response) {
-    console.log("⚠️ No static match. Using GPT fallback restricted to PIET context.");
+    console.log("⚠ No static match. Using GPT fallback restricted to PIET context.");
 
     try {
       const prompt = `
-      You are a helpful chatbot for *Poornima Institute of Engineering and Technology (PIET), Jaipur*.
-      You are NOT allowed to answer anything unrelated to PIET.
-      Reply in 1–2 short lines. If user query is not related to PIET, respond with:
-      "I'm designed to help with Poornima Institute-related queries only."
+You are an AI assistant for Poornima Institute of Engineering and Technology (PIET), Jaipur.
 
-      User Query: "${userMsg}"
-      Response:`.trim();
+Your job is to:
+- Answer ONLY college-related queries about PIET.
+- Politely decline to comment on other colleges or non-college questions.
+- Keep answers short, accurate, and clearly focused on PIET.
+- If a question includes comparisons (like “Is JECRC better?”), reply with only PIET’s positive points and avoid negative comments about others.
+- Always promote PIET in a professional and helpful tone.
+
+Never make up information. If you’re not sure, suggest contacting the admission helpline.
+
+User Query: "${userMsg}"
+Response:`.trim();
 
       const { data } = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',
@@ -128,7 +160,7 @@ app.post('/incoming', async (req, res) => {
 
       fs.appendFileSync(
         'fallback_log.txt',
-        `\n[${new Date().toISOString()}]\nUser: ${userMsg}\nIntent: ${intent}\nGPT: ${response}\n---`
+        `\n[${new Date().toISOString()}]\nUser: ${userMsg}\nIntent: ${intent}\nGPT: ${response}\n---\n`
       );
     } catch (err) {
       console.error("❌ GPT fallback error:", err.message);
