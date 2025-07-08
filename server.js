@@ -5,6 +5,7 @@ const { MessagingResponse } = require('twilio').twiml;
 const admin = require('firebase-admin');
 const axios = require('axios');
 const fs = require('fs');
+const Fuse = require('fuse.js'); 
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -58,6 +59,17 @@ function getIntentResponse(message) {
   }
 
   return null;
+}
+
+// ─── Fuzzy Match via Fuse.js ───────────────────────────────
+function fuzzyMatchIntent(userMsg) {
+  const fuse = new Fuse(VALID_KEYS, {
+    includeScore: true,
+    threshold: 0.4,
+  });
+
+  const results = fuse.search(userMsg);
+  return results.length ? results[0].item : null;
 }
 
 // ─── GPT-based Intent Classifier ───────────────────────────
@@ -116,28 +128,34 @@ app.post('/incoming', async (req, res) => {
 
   let response = getIntentResponse(userMsg) || getNestedAnswer(faq, intent);
 
-  if (response) {
-    console.log(`✅ Matched via static response.`);
+  // 🔍 Try fuzzy match if no match yet
+  if (!response && intent === 'unknown') {
+    const fuzzy = fuzzyMatchIntent(userMsg);
+    if (fuzzy) {
+      console.log(`🧩 Fuzzy matched: ${fuzzy}`);
+      response = getNestedAnswer(faq, fuzzy);
+    }
   }
 
+  // 🤖 GPT fallback
   if (!response) {
-    console.log("⚠ No static match. Using GPT fallback restricted to PIET context.");
+    console.log("⚠ No static or fuzzy match. Using GPT fallback restricted to PIET context.");
 
     try {
       const prompt = `
-You are an AI assistant for Poornima Institute of Engineering and Technology (PIET), Jaipur.
+      You are a professional chatbot for Poornima Institute of Engineering and Technology (PIET), Jaipur.
 
-Your job is to:
-- Answer ONLY college-related queries about PIET.
-- Politely decline to comment on other colleges or non-college questions.
-- Keep answers short, accurate, and clearly focused on PIET.
-- If a question includes comparisons (like “Is JECRC better?”), reply with only PIET’s positive points and avoid negative comments about others.
-- Always promote PIET in a professional and helpful tone.
+      STRICT INSTRUCTIONS:
+      -  DO NOT answer any question that is NOT about PIET (no fun facts, science, psychology, history, jokes, movies, religion, comparisons).
+      -  ONLY reply if the question is about PIET's admission, fees, hostel, placements, campus life, etc.
+      - If a user asks anything unrelated to PIET, simply respond:
+      "I'm designed to assist with Poornima Institute-related queries only."
 
-Never make up information. If you’re not sure, suggest contacting the admission helpline.
+      DO NOT try to be helpful or polite if the topic is irrelevant. No exceptions.
 
-User Query: "${userMsg}"
-Response:`.trim();
+      User Query: "${userMsg}"
+      Response:`.trim();
+
 
       const { data } = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',

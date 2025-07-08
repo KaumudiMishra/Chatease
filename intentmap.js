@@ -2,7 +2,7 @@ module.exports = {
   // Admission
   "admission.about": ["admission info", "admission details", "about admission", "admission summary"],
   "admission.process": ["admission process", "how to apply", "application process", "apply now"],
-  "admission.eligibility": ["eligibility", "who can apply", "criteria", "minimum marks"],
+  "admission.eligibility": ["eligibility", "who can apply", "criteria", "minimum marks", "age"],
   "admission.direct admission": ["direct admission", "management seat", "vacant seat", "spot admission"],
   "admission.counselling procedure": ["counselling", "reap counselling", "choice filling", "seat allotment"],
   "admission.last year cut off": ["cutoff", "last year cut off", "previous cutoff", "cut off rank"],
@@ -23,12 +23,12 @@ module.exports = {
   "fees.about": ["fees", "total fee", "fee structure", "fee summary", "full fee"],
   "fees.structure": ["structure", "detailed fee", "semester fee", "yearly fees"],
   "fees.loan assistance": ["loan", "loan support", "loan facility", "education loan"],
-  "fees.payment options": ["payment", "how to pay", "online fee", "installment"],
+  "fees.payment options": ["payment", "how to pay", "can i pay online", "online fee", "pay", "installment"],
   "fees.any hidden charges": ["hidden charges", "extra charges", "any other fee"],
 
   // Facilities
   "facilities.about": ["facilities", "what amenities", "services provided"],
-  "facilities.hostel facility": ["hostel", "hostel rooms", "accommodation"],
+
   "facilities.mess food": ["mess", "food", "canteen food", "hostel mess"],
   "facilities.wifi campus": ["wifi", "internet", "campus internet"],
   "facilities.labs and equipment": ["labs", "lab equipment", "engineering lab"],
@@ -40,19 +40,21 @@ module.exports = {
   "facilities.transport facility": ["bus", "transport", "college bus", "shuttle"],
 
   // Campus
-  "campus.about": ["campus", "about campus", "visit", "environment"],
-  "campus.location": ["location", "address", "where is piet"],
-  "campus.area": ["area", "campus size", "campus space"],
-  "campus.facilities": ["campus facilities", "infrastructure", "campus services"],
+  // Campus (specific first)
+  "campus.visit": ["campus visit", "can i visit", "visit timing", "visit campus", "campus tour", "campus visit timing", "visit", "timings"],
   "campus.wifi": ["wifi", "internet in campus", "network"],
   "campus.security": ["security", "guards", "safe campus", "cctv"],
+  "campus.facilities": ["campus facilities", "infrastructure", "campus services"],
   "campus.environment": ["environment", "green campus", "eco friendly"],
-  "campus.visit": ["campus visit", "can i visit", "visit timing"],
+  "campus.area": ["area", "campus size", "campus space"],
+  "campus.location": ["location", "address", "where is piet"],
+  "campus.about": ["campus", "about campus", "campus overview", "inside campus", "campus info"],
+
 
   // Events
-  "annual_fest.about": ["annual fest", "aarohan", "main fest", "dj night", "celebrity event"],
+  "annual_fest.about": ["annual fest", "aarohan", "main fest", "dj night", "celebrity event", "organize fest", "fest month"],
   "events.about": ["events", "tech events", "manthan", "hackathon", "robo fight", "kalanidhi"],
-  "freshers_party.about": ["freshers party", "pehla kadam", "welcome party", "orientation"],
+  "freshers_party.about": ["freshers party", "pehla kadam", "welcome party", "freshers", "orientation"],
   "farewell_party.about": ["farewell", "final year party", "last event", "goodbye party"],
 
   // Life
@@ -72,11 +74,11 @@ module.exports = {
   "placements.average package": ["average package", "average salary", "mean ctc"],
   "placements.placement training": ["placement training", "preparation", "mock test"],
   "placements.internship support": ["internship", "summer internship", "training"],
-  "placements.training modules": ["training modules", "aptitude", "resume", "mock interview"],
+  "placements.training modules": ["training modules", "aptitude", "resume", "value added course", "campus recruitment training", "mock interview"],
   "placements.placement cell": ["placement cell", "tpo", "placement office"],
 
   // Other
-  "pbic.about": ["pbic", "startup", "incubation", "entrepreneurship"],
+  "pbic.about": ["pbic", "startup", "incubation", "entrepreneurship", "business"],
   "student_support.about": ["student support", "help", "counselling", "career guidance"],
   "clubs.about": ["clubs", "extra activities", "hobby", "coding club", "dance club"],
   "help.about": ["help", "support", "contact", "phone", "email"],
@@ -86,27 +88,53 @@ module.exports = {
   "leadership.registrar_ombudsperson": ["registrar", "ombudsperson", "discipline"],
   "leadership.controller_of_examination": ["controller", "exam cell", "exam head"],
   "leadership.governing_council": ["governing council", "board members"],
+
+
   "departments.applied_sciences": ["applied sciences", "first year dept", "math physics"],
   "departments.computer_science": ["computer science", "cse", "cs dept"],
   "departments.ai_ds": ["ai ds", "data science", "artificial intelligence"],
   "departments.iot": ["iot", "internet of things"],
   "departments.cybersecurity": ["cybersecurity", "cyber", "network security"],
-  "innovation_research.aicte_idea_lab": ["idea lab", "innovation", "aicte lab"],
+
+  "innovation_research.aicte_idea_lab": ["idea lab", "aicte lab", "patent", "usp"],
   "innovation_research.funding_incubation": ["funding", "startup fund", "incubation"],
-  "innovation_research.research_development_cell": ["research", "r&d cell", "research work"],
+  "innovation_research.research_development_cell": ["r&d cell", "research work"],
   "innovation_research.iic": ["iic", "innovation council", "iic piet"],
   "innovation_research.ipr": ["ipr", "patent", "copyright", "intellectual"],
   "innovation_research.industry_institute_interaction_practices": ["iii", "industry training", "i3 day"],
   "innovation_research.partners_industry_interaction": ["industry partners", "tie ups", "collaboration"],
+  "innovation_research.about": ["innovation", "research"],
+
   "chapters.ISTE_Chapter": ["iste", "iste chapter"],
   "chapters.IEEE_Chapter": ["ieee", "ieee chapter"],
   "chapters.ACM_Chapter": ["acm", "acm chapter"],
   "chapters.IETE_Chapter": ["iete", "iete chapter"],
+
   "chapters.Poornima_Electoral_Literacy_Forum": ["electoral", "voting", "political awareness"],
+
   "accreditation.about": ["accreditation", "naac", "nba", "iso", "ranking"],
+
   "alumni.about": ["alumni", "ex students", "old students", "past students"],
+
   "anti_ragging.about": ["ragging", "anti ragging", "safety", "complaint", "proctor"],
-  "poornima_group.about": ["poornima university", "pce", "piet", "group", "pu", "poornima group"],
-  "dress_code.about": ["dress code", "uniform", "what to wear", "college dress"],
-  "hostel_info.about": ["hostel info", "hostel fee", "ojas", "hostel life", "accommodation"]
+
+  "poornima_group.about": ["poornima university", "pce", "group", "pu", "college compare", "pce vs piet", "pu vs piet", "poornima group", "university comparison", "university"],
+
+  "dress_code.about": ["dress code", "uniform", "what to wear", "college dress", "dress policy", "dress"],
+
+  "hostel_info.about": ["hostel info", "hostel", "hostel fee", "hostel fees", "hostel fest", "ojas", "hostel life", "accommodation"],
+  "transport.about": [
+    "transport",
+    "bus service",
+    "college bus",
+    "do you provide transport",
+    "transportation facility",
+    "bus timing",
+    "bus available"
+  ],
+  "tcs_ion.about": ["tcs ion", "student app", "notes app", "college portal"],
+  "sports.about": ["sports", "games available", "football ground", "cricket match", "intercollege tournament", "college sports", "do you have sports facilities", "indoor outdoor games"]
+
+
+
 };

@@ -3,3 +3,5 @@ node_modules
 .wwebjs_cache
 serviceAccountKey.json
 .env
+package-lock.json
+package.json

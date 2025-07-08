@@ -5,6 +5,7 @@ const { MessagingResponse } = require('twilio').twiml;
 const admin = require('firebase-admin');
 const axios = require('axios');
 const fs = require('fs');
+const Fuse = require('fuse.js');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -17,29 +18,67 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 
-// ─── Load FAQ Data ─────────────────────────────────────────
+// ─── Load FAQ Data & Intent Map ────────────────────────────
 const faq = require('./faq.json');
-const VALID_KEYS = Object.keys(faq);
+const intentMap = require('./intentmap');
 
-// ─── GPT-based Intent Classifier ───────────────────────────
-async function classifyIntent(userInput) {
-  const prompt = `
-You're an intent classifier. From the list below, return the closest matching key (case-insensitive) based on user input.
-Only choose from the list. If no good match, return "unknown".
+// ─── Recursively Extract All Nested Keys ───────────────────
+function extractAllKeys(obj, prefix = '') {
+  return Object.keys(obj).flatMap(key => {
+    const fullKey = prefix ? `${prefix}.${key}` : key;
+    return typeof obj[key] === 'object' && !Array.isArray(obj[key])
+      ? extractAllKeys(obj[key], fullKey)
+      : fullKey;
+  });
+}
+const VALID_KEYS = extractAllKeys(faq);
 
-Valid Keys:
-${VALID_KEYS.join(', ')}
+// ─── Get Answer for Nested Keys ────────────────────────────
+function getNestedAnswer(obj, path) {
+  return path.split('.').reduce((o, key) => (o && o[key] ? o[key] : null), obj);
+}
 
-User Message: "${userInput}"
-Matched Key (one of above):`;
+// ─── Match User Message to Intent Map ──────────────────────
+function getIntentResponse(message) {
+  const lowerMessage = message.toLowerCase();
+  for (const [intent, synonyms] of Object.entries(intentMap)) {
+    for (const synonym of synonyms) {
+      if (lowerMessage.includes(synonym.toLowerCase())) {
+        const data = faq[intent];
+        if (!data) continue;
 
+        const subMatch = Object.entries(data).find(([key]) =>
+          lowerMessage.includes(key.toLowerCase())
+        );
+        if (subMatch) return subMatch[1];
+
+        return data.about || null;
+      }
+    }
+  }
+  return null;
+}
+
+// ─── Fuzzy Match via Fuse.js ───────────────────────────────
+function fuzzyMatchIntent(userMsg) {
+  const fuse = new Fuse(VALID_KEYS, {
+    includeScore: true,
+    threshold: 0.4,
+  });
+
+  const results = fuse.search(userMsg);
+  return results.length ? results[0].item : null;
+}
+
+// ─── Use Mistral via OpenRouter ────────────────────────────
+async function callMistral(prompt, max_tokens = 20) {
   try {
     const { data } = await axios.post(
       'https://openrouter.ai/api/v1/chat/completions',
       {
         model: 'mistralai/mistral-7b-instruct',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 10,
+        max_tokens,
         temperature: 0,
       },
       {
@@ -49,22 +88,52 @@ Matched Key (one of above):`;
         },
       }
     );
-
-    let raw = data.choices[0].message.content.trim().toLowerCase();
-
-    // Handle partial matches
-    if (!VALID_KEYS.includes(raw)) {
-      const match = VALID_KEYS.find(k =>
-        k.startsWith(raw) || raw.includes(k) || raw === k.split('_')[0]
-      );
-      return match || 'unknown';
-    }
-
-    return raw;
+    return data.choices[0].message.content.trim().toLowerCase();
   } catch (err) {
-    console.error('❌ GPT classification error:', err.message);
-    return 'unknown';
+    console.error("❌ Mistral error:", err.message);
+    return '';
   }
+}
+
+// ─── Domain Relevance Classifier ───────────────────────────
+async function isDomainRelevant(userInput) {
+  const prompt = `
+Only answer "yes" or "no".
+Is this question specifically about the Poornima Institute of Engineering and Technology (PIET), Jaipur?
+Query: "${userInput}"`.trim();
+  const result = await callMistral(prompt);
+  return result.includes('yes');
+}
+
+// ─── Absurdity / Joke Filter ───────────────────────────────
+async function isAbsurdQuery(userInput) {
+  const prompt = `
+Only answer "yes" or "no".
+Is this query absurd, a joke, unrealistic, or non-serious in the context of an academic chatbot?
+Query: "${userInput}"`.trim();
+  const result = await callMistral(prompt);
+  return result.includes('yes');
+}
+
+// ─── GPT Intent Classifier ─────────────────────────────────
+async function classifyIntent(userInput) {
+  const prompt = `
+You're an intent classifier. From the list below, return the closest matching key (case-insensitive) based on user input.
+Only choose from the list. If no good match, return "unknown".
+Valid Keys:
+${VALID_KEYS.join(', ')}
+
+User Message: "${userInput}"
+Matched Key (one of above):`.trim();
+
+  const raw = await callMistral(prompt);
+  if (!VALID_KEYS.includes(raw)) {
+    const match = VALID_KEYS.find(k =>
+      k.startsWith(raw) || raw.includes(k) || raw === k.split('.')[0]
+    );
+    return match || 'unknown';
+  }
+  return raw;
 }
 
 // ─── Incoming WhatsApp Message Handler ─────────────────────
@@ -74,29 +143,58 @@ app.post('/incoming', async (req, res) => {
 
   console.log(`📩 Incoming message: "${userMsg}"`);
 
+  // 🛑 Step 1: Absurd check
+  if (await isAbsurdQuery(userMsg)) {
+    const msg = "I'm designed to answer relevant queries about PIET. Please ask something relevant.";
+    console.log(`🚫 Absurd query blocked.`);
+    twiml.message(msg);
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    return res.end(twiml.toString());
+  }
+
+  // 🛑 Step 2: Domain relevance check
+  if (!(await isDomainRelevant(userMsg))) {
+    const msg = "📘 I'm designed to answer relevant queries about PIET. Please recheck your message.";
+    console.log(`🚫 Irrelevant query blocked.`);
+    twiml.message(msg);
+    res.writeHead(200, { 'Content-Type': 'text/xml' });
+    return res.end(twiml.toString());
+  }
+
+  // ✅ Step 3: Normal intent classification
   const intent = await classifyIntent(userMsg);
   console.log(`🧠 Intent Detected: ${intent}`);
 
-  let response = faq[intent]?.answer;
+  let response = getIntentResponse(userMsg) || getNestedAnswer(faq, intent);
 
+  if (!response && intent === 'unknown') {
+    const fuzzy = fuzzyMatchIntent(userMsg);
+    if (fuzzy) {
+      console.log(`🧩 Fuzzy matched: ${fuzzy}`);
+      response = getNestedAnswer(faq, fuzzy);
+    }
+  }
+
+  // 🤖 Step 4: GPT fallback if needed
   if (!response) {
-    console.log("⚠️ No static match. Using GPT fallback restricted to PIET context.");
+    console.log("⚠ No static or fuzzy match. Using GPT fallback restricted to PIET context.");
+    const fallbackPrompt = `
+    You are a professional chatbot for Poornima Institute of Engineering and Technology (PIET), Jaipur.
+
+    STRICT INSTRUCTIONS:
+    - DO NOT answer any question that is NOT about PIET (no fun facts, jokes, movies, etc.).
+    - ONLY reply if the question is about PIET's admission, fees, hostel, placements, campus life, etc.
+    - If irrelevant, respond: "I'm designed to assist with Poornima Institute-related queries only."
+
+    User Query: "${userMsg}"
+    Response:`.trim();
 
     try {
-      const prompt = `
-You are a helpful chatbot for *Poornima Institute of Engineering and Technology (PIET), Jaipur*.
-You are NOT allowed to answer anything unrelated to PIET.
-Reply in 1–2 short lines. If user query is not related to PIET, respond with:
-"I'm designed to help with Poornima Institute-related queries only."
-
-User Query: "${userMsg}"
-Response:`.trim();
-
       const { data } = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',
         {
           model: 'mistralai/mistral-7b-instruct',
-          messages: [{ role: 'user', content: prompt }],
+          messages: [{ role: 'user', content: fallbackPrompt }],
           max_tokens: 150,
           temperature: 0.5,
         },
@@ -110,10 +208,9 @@ Response:`.trim();
 
       response = data.choices[0].message.content.trim();
       console.log(`💡 GPT Response: ${response}`);
-
       fs.appendFileSync(
         'fallback_log.txt',
-        `\n[${new Date().toISOString()}]\nUser: ${userMsg}\nIntent: ${intent}\nGPT: ${response}\n---`
+        `\n[${new Date().toISOString()}]\nUser: ${userMsg}\nIntent: ${intent}\nGPT: ${response}\n---\n`
       );
     } catch (err) {
       console.error("❌ GPT fallback error:", err.message);
@@ -132,572 +229,3 @@ const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
-----------------------------------------------------------------------------------------------------------------------
-
-{
-  "piet_contact": {
-    "answer": "📬 **Campus Address**\nPoornima Institute of Engineering & Technology  \nISI 2, RIICO Institutional Area, Sitapura, Jaipur – 302022, Rajasthan  \n\n📧 **Official Emails**\n• pietjaipur@rtu.ac.in  \n• principal.piet@poornima.org  \n• iqac.piet@poornima.org",
-    "syn": [
-      "piet contact",
-      "email piet",
-      "piet email address",
-      "how to contact piet",
-      "contact info of piet",
-      "piet phone",
-      "piet mail",
-      "piet communication"
-    ]
-  },
-  "piet_info": {
-    "answer": "🏫 **Poornima Institute of Engineering & Technology (PIET)**  \n📍 **Location**: Sitapura, Jaipur, Rajasthan  \n📅 **Established**: 2007  \n🎓 **Affiliation**: RTU Kota  \n✅ **Approved by**: AICTE",
-    "syn": [
-      "about piet",
-      "piet college details",
-      "piet overview",
-      "poornima info",
-      "piet introduction",
-      "piet basic info"
-    ]
-  },
-  "piet_principal": {
-    "answer": "👨‍🏫 **Principal – Dr. Dinesh Goyal**  \n📧 Email: dinesh.goyal@poornima.org  \n🎓 Qualification: Ph.D. in Computer Science & Engineering  \n📊 Expertise: Cloud Security, Image Processing, Data Analytics  \n📅 Experience: 24+ years",
-    "syn": [
-      "principal",
-      "head of piet",
-      "who is piet principal",
-      "principal of poornima",
-      "piet college principal"
-    ]
-  },
-  "piet_registrar": {
-    "answer": "👨‍💼 **Registrar – Dr. Balwan**  \n📧 Email: registrar.piet@poornima.org  \n🎓 Qualification: Ph.D. in Advanced Concrete Technology  \n🧠 Expertise: Concrete Technology, Structural Engineering, Sustainable Materials  \n📅 Experience: 10+ years",
-    "syn": [
-      "registrar piet",
-      "who is piet registrar",
-      "piet admin head",
-      "poornima registrar",
-      "contact registrar piet"
-    ]
-  },
-  "piet_library": {
-    "answer": "📚 **PIET Central Library – Jaipur**\n\nPoornima Institute of Engineering and Technology (PIET) has a well-equipped library that supports academic and research needs across engineering disciplines.\n\n🔹 **Resources**:\n• 29,000+ physical books  \n• 41,000+ electronic resources  \n• 3,469 titles and 27,012 volumes  \n• 25 international & 51 national journals\n\n💻 **Digital Access**:\n• IEEE, DELNET, J-Gate, NDLI, CALIBER, e-Kumbh\n• Accessible on-campus and remotely\n• KOHA & TCS-iON for digital management\n\n🪑 **Infrastructure**:\n• Seating for 100+ students  \n• Comfortable study spaces, computer systems\n\n♿ **Accessibility**:\n• Disability-friendly with ramps, restrooms & assistive tech\n\n🕘 **Timings**:\n• Mon–Sat: 8:00 AM to 8:00 PM  \n• Sunday: 1:00 PM to 6:00 PM",
-    "syn": [
-      "library piet",
-      "books in piet",
-      "digital library piet",
-      "piet library resources",
-      "piet e books",
-      "timing of library",
-      "piet library access",
-      "piet library hours",
-      "library facilities in piet"
-    ]
-  },
-  "admission_process": {
-    "syn": [
-      "apply",
-      "registration",
-      "procedure",
-      "form",
-      "steps"
-    ],
-    "answer": "📝 The admission process includes registering on the REAP or PIET website, submitting personal and academic details, uploading documents, paying the application fee, and attending REAP counseling (for state quota). Final steps involve seat allotment, document verification, and fee payment."
-  },
-  "admission_eligibility": {
-    "syn": [
-      "eligibility",
-      "criteria",
-      "qualifications",
-      "requirement"
-    ],
-    "answer": "🎓 B.Tech applicants must have 10+2 with Physics, Math, and one subject like Chemistry/Biology/Biotech/Technical. Minimum marks: 45% (General), 40% (SC/ST/OBC). Preferred exam: JEE Main. For M.Tech, a B.E./B.Tech in a relevant field with GATE/RTU CAM score. Ph.D. requires a relevant Master's degree and exam per RTU/UGC norms."
-  },
-  "admission_overview": {
-    "syn": [
-      "approval",
-      "recognition",
-      "affiliation",
-      "accreditation",
-      "validity"
-    ],
-    "answer": "📚 PIET is approved by AICTE, recognized by UGC under Section 2(f), NAAC Accredited with 'A' Grade, and affiliated to Rajasthan Technical University (RTU), Kota. Highest placement: ₹45 LPA. Average: ₹5.4 LPA. Top recruiters include Infosys, TCS, Celebal, Optum, and ATCS."
-  },
-  "regulatory_bodies": {
-    "syn": [
-      "ugc",
-      "aicte",
-      "naac",
-      "rtu",
-      "authorities"
-    ],
-    "answer": "🔍 PIET is AICTE approved, NAAC accredited, UGC recognized under Section 2(f), and affiliated with RTU Kota."
-  },
-  "fill_form": {
-    "syn": [
-      "how to apply",
-      "form filling",
-      "submit",
-      "documents",
-      "application"
-    ],
-    "answer": "🖊️ Apply online via the PIET or REAP portal. Fill in personal and academic details, upload documents (10th/12th marksheets, JEE scorecard, ID proof, photos, certificates), pay the fee, and submit. Download the confirmation page after submission."
-  },
-  "branches": {
-    "syn": [
-      "courses",
-      "programs",
-      "degrees",
-      "departments",
-      "disciplines"
-    ],
-    "answer": "🏛️ PIET offers B.Tech in Computer Science & Engineering, AI & Data Science, Computer Engineering, Electrical Engineering, ECE, and Civil Engineering. M.Tech is offered in CSE, Power Systems, VLSI, and Structural Engg. Ph.D. is available in multiple specializations."
-  },
-  "seat_distribution": {
-    "syn": [
-      "quota",
-      "reservation",
-      "allocation",
-      "category",
-      "seat division"
-    ],
-    "answer": "📊 70% seats for Rajasthan State Quota, 15% for Other States, 15% via Management Quota. Supernumerary seats include 5% each for TFWS and Kashmiri Migrants."
-  },
-  "seat_matrix": {
-    "syn": [
-      "intake",
-      "strength",
-      "capacity",
-      "branch wise",
-      "seats"
-    ],
-    "answer": "📌 Branch-wise B.Tech intake: CSE – 180, AI & DS – 60, Computer Engg – 60, ECE – 60, Electrical – 60, Civil – 30. Total annual intake: 450."
-  },
-  "apply_link": {
-    "syn": [
-      "website",
-      "apply now",
-      "registration link",
-      "form",
-      "portal"
-    ],
-    "answer": "🌐 Apply via [PIET Website](https://www.piet.poornima.org) or the REAP portal. Look for 'Apply Now' or 'Registration' section."
-  },
-  "placements": {
-    "syn": [
-      "job",
-      "recruitment",
-      "career",
-      "companies",
-      "package"
-    ],
-    "answer": "💼 Highest package: ₹45 LPA. Average: ₹5.4 LPA. Top recruiters: Infosys, TCS, Celebal, Optum, ATCS, and more."
-  },
-  "accreditation": {
-    "syn": [
-      "nba",
-      "naac",
-      "ugc",
-      "affiliated",
-      "recognition"
-    ],
-    "answer": "✅ PIET holds NBA accreditation for selected programs, NAAC 'A' Grade, UGC recognition (2f), and RTU affiliation. Approved by AICTE."
-  },
-  "research": {
-    "syn": [
-      "labs",
-      "centres",
-      "innovation",
-      "projects",
-      "collaborations"
-    ],
-    "answer": "🔬 Research at PIET is driven by Poornima Research Group (PRG) and dedicated labs in CS, ECE, Electrical, and Civil departments. MoUs exist with ISRO, DRDO, and top industries for collaborative work."
-  },
-  "facilities": {
-    "syn": [
-      "facilities",
-      "campus",
-      "infrastructure",
-      "amenities",
-      "environment"
-    ],
-    "answer": "🏫 PIET offers a modern, Wi-Fi enabled campus with smart classrooms, well-equipped labs, and a central library with 29,000+ books and 41,000+ e-resources. Students benefit from a digital learning center, innovation labs, seminar halls, a large auditorium, cafeterias, on-campus banking/ATM, and 24×7 security with CCTV."
-  },
-  "hostel": {
-    "syn": [
-      "hostel",
-      "stay",
-      "accommodation",
-      "rooms",
-      "dorm"
-    ],
-    "answer": "🏠 PIET has separate hostels for boys and girls with 1,000+ capacity. Room options include single, double, and triple occupancy — all furnished and Wi-Fi enabled. Facilities include hygienic mess, power backup, laundry, medical help, and recreation zones. Strict rules ensure a ragging-free, safe environment."
-  },
-  "gym": {
-    "syn": [
-      "gym",
-      "fitness",
-      "workout",
-      "training"
-    ],
-    "answer": "💪 The campus gym has treadmills, multi-gym stations, benches, and more. Certified trainers are available, and sessions are held separately for boys and girls in the morning and evening. All hostel residents and day scholars have access."
-  },
-  "sports": {
-    "syn": [
-      "sports",
-      "games",
-      "athletics",
-      "physical activities",
-      "events"
-    ],
-    "answer": "🏅 PIET promotes holistic development through a dedicated sports complex and indoor stadium. Students actively participate in cricket, football, basketball, volleyball, badminton, chess, carrom, and athletics. Events like 'Lakshya' and intercollegiate tournaments are held regularly. Over 60% of students engage in at least one sport."
-  },
-  "sports_support": {
-    "syn": [
-      "sports support",
-      "benefits",
-      "sports aid",
-      "assistance",
-      "backup"
-    ],
-    "answer": "🎯 Outstanding athletes at PIET receive sports scholarships, travel/accommodation support, and first-aid during events. A dedicated sports committee helps organize events and guides student athletes."
-  },
-  "yoga_and_wellness": {
-    "syn": [
-      "wellness",
-      "yoga",
-      "meditation",
-      "health",
-      "mental support"
-    ],
-    "answer": "🧘 Regular yoga and meditation sessions are conducted on campus. Wellness workshops on stress, nutrition, and lifestyle are held. A counseling cell offers support to students for mental well-being."
-  },
-  "events": {
-    "syn": [
-      "events",
-      "college events",
-      "functions",
-      "activities"
-    ],
-    "answer": "🎉 PIET organizes a wide range of events that enrich campus life. These include technical fests, cultural celebrations, sports meets, and other highlights like convocations and alumni meets. Explore: events_technical, events_cultural, events_sports, events_other."
-  },
-  "events_technical": {
-    "syn": [
-      "technical events",
-      "tech fest",
-      "hackathons",
-      "seminars",
-      "workshops"
-    ],
-    "answer": "💡 PIET hosts various technical events like TechnoFest (annual tech fest), internal and external hackathons, workshops on AI, IoT, Data Science, Robotics, and expert seminars. Students also participate in project exhibitions and competitions to showcase innovation."
-  },
-  "events_cultural": {
-    "syn": [
-      "cultural events",
-      "aarohan",
-      "fest",
-      "celebrations",
-      "dance",
-      "music"
-    ],
-    "answer": "🎭 Cultural life at PIET includes AAROHAN (annual cultural fest), Freshers’ and Farewell parties, celebrations of festivals like Diwali and Holi, and inter-department competitions in music, dance, drama, and literature."
-  },
-  "events_sports": {
-    "syn": [
-      "sports",
-      "sports events",
-      "athletics",
-      "games",
-      "tournaments"
-    ],
-    "answer": "🏅 PIET encourages sports through events like Lakshya (annual sports meet), inter/intra-college tournaments, and athletics. The campus supports active student participation in both indoor and outdoor games."
-  },
-  "events_other": {
-    "syn": [
-      "convocation",
-      "alumni",
-      "outreach",
-      "summits",
-      "placement events"
-    ],
-    "answer": "📌 Other major events include the Annual Convocation, Alumni Meets, NSS activities, social drives like Swachh Bharat Abhiyan, entrepreneurship summits, and regular placement drives and job fairs."
-  },
-  "fees": {
-    "syn": [
-      "fees",
-      "fee structure",
-      "course charges",
-      "tuition",
-      "hostel fees"
-    ],
-    "answer": "💰 PIET offers transparent fee details for each course including B.Tech and M.Tech. Scholarships are also available. Explore: fees_btech, fees_mtech, fees_scholarship."
-  },
-  "fees_btech": {
-    "syn": [
-      "btech fees",
-      "engineering fee",
-      "course fee",
-      "college charges"
-    ],
-    "answer": "📚 B.Tech fee per year: ₹85,575 (tuition) + ₹12,835 (development) + ₹21,395 (accreditation). Registration: ₹1,500 (one-time). Other: RTU enrollment (as per norms), ₹2,000 activity fee, ₹5,000 uniform (one-time). Hostel: ₹80,000–1,10,000/year. Mess: ₹3,000/month approx."
-  },
-  "fees_scholarship": {
-    "syn": [
-      "scholarships",
-      "fee concession",
-      "merit scholarship",
-      "reservation benefits"
-    ],
-    "answer": "🎖️ Scholarships at PIET include merit-based, sports, and government-sponsored schemes for reserved and economically weaker students. Refer to the website for eligibility and application guidelines."
-  },
-  "transport_info": {
-    "syn": [
-      "transport",
-      "bus service",
-      "commute",
-      "pickup drop",
-      "route info"
-    ],
-    "answer": "🚌 PIET provides a safe and reliable transport facility. A fleet of 30+ GPS-enabled buses covers Jaipur and nearby towns. "
-  },
-  "transport": {
-    "syn": [
-      "bus",
-      "transport",
-      "commute",
-      "pickup",
-      "drop",
-      "routes",
-      "safety"
-    ],
-    "answer": "🚌 PIET provides 30+ buses across Jaipur and nearby towns like Mansarovar, Vaishali Nagar, and Sanganer. Buses have GPS, CCTV, and first-aid kits. Fee: ₹20,000–25,000/year (approx.). Morning and evening timings match class schedules."
-  },
-  "idea_lab_overview": {
-    "syn": [
-      "idea",
-      "innovation",
-      "prototype",
-      "lab",
-      "aicte lab"
-    ],
-    "answer": "💡 The IDEA Lab at PIET is a multidisciplinary center that promotes innovation, hands-on learning, and product development. It encourages students and faculty to convert creative ideas into real prototypes with industry-grade tools and mentoring."
-  },
-  "idea_lab_objectives": {
-    "syn": [
-      "goals",
-      "mission",
-      "purpose"
-    ],
-    "answer": "🎯 The lab focuses on experiential learning, entrepreneurship, and problem-solving. It bridges academics and industry by providing guidance and resources for real-world innovation."
-  },
-  "idea_lab_facilities": {
-    "syn": [
-      "tools",
-      "equipment",
-      "machines",
-      "setup"
-    ],
-    "answer": "🛠️ Facilities include 3D printers, laser cutters, CNC machines, electronics benches, PCB prototyping tools, IoT/robotics kits, CAD/CAM software, and dedicated project spaces like studios and fabrication labs."
-  },
-  "idea_lab_events": {
-    "syn": [
-      "workshops",
-      "competitions",
-      "activities",
-      "programs"
-    ],
-    "answer": "📅 Regular events include hackathons, bootcamps, 3D printing and robotics workshops, guest lectures, and demo exhibitions to showcase student innovations."
-  },
-  "idea_lab_achievements": {
-    "syn": [
-      "success",
-      "awards",
-      "impact",
-      "recognition"
-    ],
-    "answer": "🏆 Students have won national hackathons, built patented/commercialized prototypes, and collaborated with industries. The lab has earned AICTE recognition for its hands-on innovation model."
-  },
-  "pbic_overview": {
-    "syn": [
-      "incubator",
-      "startup",
-      "entrepreneurship",
-      "pbic"
-    ],
-    "answer": "🚀 The Poornima Business Incubation Center (PBIC) supports early-stage startups from students, alumni, and faculty. It provides a launchpad for innovation-driven entrepreneurship within campus."
-  },
-  "pbic_objectives": {
-    "syn": [
-      "mission",
-      "vision",
-      "goal",
-      "startup support"
-    ],
-    "answer": "📈 PBIC aims to assist idea validation, funding, mentorship, and business scaling. It nurtures a culture of innovation and connects startups with investors and industry experts."
-  },
-  "pbic_facilities": {
-    "syn": [
-      "infrastructure",
-      "space",
-      "offices",
-      "amenities"
-    ],
-    "answer": "🏢 Facilities include co-working areas, private cabins, high-speed internet, meeting rooms, and access to IDEA Lab’s prototyping tools along with legal and admin support."
-  },
-  "pbic_infrastructure": {
-    "syn": [
-      "building",
-      "campus space",
-      "center"
-    ],
-    "answer": "🏬 PBIC has a dedicated incubation building with 24/7 access, cafeteria, and recreational spaces, fostering an ideal startup environment."
-  },
-  "pbic_utilities": {
-    "syn": [
-      "services",
-      "support",
-      "amenities"
-    ],
-    "answer": "🧰 Utilities offered include printing, scanning, courier, housekeeping, security, and daily maintenance for smooth operational flow."
-  },
-  "pbic_support": {
-    "syn": [
-      "help",
-      "funding",
-      "business help",
-      "resources"
-    ],
-    "answer": "💼 Startups receive seed funding assistance, business planning, market research help, and access to investor networking events."
-  },
-  "pbic_mentorship": {
-    "syn": [
-      "advisors",
-      "guidance",
-      "mentors",
-      "sessions"
-    ],
-    "answer": "🎓 Mentorship includes one-on-one sessions with faculty, alumni entrepreneurs, and industry professionals, along with startup clinics and workshops on pitching and fundraising."
-  },
-  "pbic_startups": {
-    "syn": [
-      "portfolio",
-      "examples",
-      "companies",
-      "initiatives"
-    ],
-    "answer": "📋 Some successful startups incubated at PBIC include AgroTech Solutions (smart farming), MedAssist (health app), EcoBuild (green materials), EduSpark (e-learning), and SafeDrive (vehicle IoT)."
-  },
-  "pbic_eligibility": {
-    "syn": [
-      "who can apply",
-      "criteria",
-      "selection"
-    ],
-    "answer": "✅ PBIC is open to Poornima students, alumni (within 5 years), faculty, and external startups with institutional collaboration. Selection is based on idea scalability, team capability, and commitment."
-  },
-  "pbic_structure": {
-    "syn": [
-      "team",
-      "organization",
-      "setup",
-      "timeline"
-    ],
-    "answer": "🔧 Governed by an Incubation Manager, advisory board, and support team. Startups are incubated for 6–18 months with graduation based on prototype readiness, funding, or market traction."
-  },
-  "pbic_reports": {
-    "syn": [
-      "annual report",
-      "summary",
-      "review"
-    ],
-    "answer": "📑 Annual reports highlight startup progress, funding, events, and impact. These are published on the PBIC/Poornima website for transparency and insight."
-  },
-  "transport_banipark": {
-    "syn": [
-      "banipark",
-      "bus banipark",
-      "route banipark"
-    ],
-    "answer": "🚌 Banipark to PIET via Sindhi Camp, MI Road, and Gopalpura. Timings: 6:45–7:15 AM (pickup), 4:30–5:00 PM (drop). AC/Non-AC buses with GPS and trained staff."
-  },
-  "transport_cscheme": {
-    "syn": [
-      "c-scheme",
-      "cscheme",
-      "statue circle",
-      "bus cscheme"
-    ],
-    "answer": "🚌 C-Scheme to PIET via Statue Circle, Rambagh, and Tonk Road. Timings: 7:00–7:30 AM (pickup), 4:30–5:00 PM (drop). Buses have CCTV, first-aid, and comfortable seating."
-  },
-  "transport_jagatpura": {
-    "syn": [
-      "jagatpura",
-      "malviya",
-      "gt",
-      "bus jagatpura"
-    ],
-    "answer": "🚌 Jagatpura to PIET via Malviya Nagar and Gaurav Tower. Timings: 7:15–7:45 AM (pickup), 4:30–5:00 PM (drop). Clean, GPS-enabled, and regularly sanitized buses."
-  },
-  "transport_jhotwara": {
-    "syn": [
-      "jhotwara",
-      "vaishali",
-      "khatipura",
-      "bus jhotwara"
-    ],
-    "answer": "🚌 Jhotwara to PIET via Khatipura, Vaishali Nagar, and Ajmer Road. Timings: 6:45–7:15 AM (pickup), 4:30–5:00 PM (drop). Spacious buses with experienced staff."
-  },
-  "transport_malviyanagar": {
-    "syn": [
-      "malviya",
-      "jawahar circle",
-      "gt",
-      "bus malviya"
-    ],
-    "answer": "🚌 Malviya Nagar to PIET via Gaurav Tower and Jawahar Circle. Timings: 7:00–7:30 AM (pickup), 4:30–5:00 PM (drop). Onboard CCTV, well-maintained service."
-  },
-  "transport_mansarovar": {
-    "syn": [
-      "mansarovar",
-      "new sanganer",
-      "bus mansarovar"
-    ],
-    "answer": "🚌 Mansarovar to PIET via New Sanganer Road and Gopalpura Bypass. Timings: 7:00–7:30 AM (pickup), 4:30–5:00 PM (drop). Large, punctual, and clean buses."
-  },
-  "transport_shastri": {
-    "syn": [
-      "shastri nagar",
-      "mi road",
-      "bani park",
-      "bus shastri"
-    ],
-    "answer": "🚌 Shastri Nagar to PIET via MI Road and Tonk Road. Timings: 6:45–7:15 AM (pickup), 4:30–5:00 PM (drop). GPS tracking and onboard attendants for safety."
-  },
-  "transport_sitapura": {
-    "syn": [
-      "sitapura",
-      "pratap nagar",
-      "riico",
-      "bus sitapura"
-    ],
-    "answer": "🚌 Sitapura to PIET via RIICO and Pratap Nagar. Timings: 7:30–8:00 AM (pickup), 4:30–5:00 PM (drop). Quick local route for nearby students with frequent service."
-  },
-  "transport_tonkroad": {
-    "syn": [
-      "tonk road",
-      "durgapura",
-      "sanganer",
-      "bus tonk road"
-    ],
-    "answer": "🚌 Tonk Road to PIET via Durgapura and Sanganer. Timings: 7:10–7:40 AM (pickup), 4:30–5:00 PM (drop). Multiple convenient stops with AC/Non-AC bus options."
-  },
-  "transport_vaishali": {
-    "syn": [
-      "vaishali nagar",
-      "ajmer road",
-      "gopalpura",
-      "bus vaishali"
-    ],
-    "answer": "🚌 Vaishali Nagar to PIET via Ajmer Road and Gopalpura. Timings: 7:00–7:30 AM (pickup), 4:30–5:00 PM (drop). Safe, reliable transport with trained drivers and emergency support."
-  }
-}
