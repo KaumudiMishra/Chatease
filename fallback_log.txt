@@ -142,3 +142,60 @@ User: does your institution has ncc unit
 Intent: unknown
 GPT: Yes, Poornima Institute of Engineering and Technology does have an NCC unit. It offers both Army and Air Wing units to students who are interested in joining. For more information, please visit the NCC section on our official website or contact the NCC office directly.
 ---
+
+[2025-07-08T16:15:54.528Z]
+User: best engeneering college in jaipur
+Intent: unknown
+GPT: "Poornima Institute of Engineering and Technology is one of the top engineering colleges in Jaipur. However, I'm designed to assist with Poornima Institute-related queries only."
+---
+
+[2025-07-08T16:17:35.907Z]
+User: ⁵hu
+Intent: unknown
+GPT: I'm designed to assist with Poornima Institute-related queries only.
+---
+
+[2025-07-08T16:17:52.215Z]
+User: tell me worst college in jaipur
+Intent: unknown
+GPT: I'm designed to assist with Poornima Institute-related queries only.
+---
+
+[2025-07-08T16:18:45.334Z]
+User: okay
+Intent: unknown
+GPT: I'm here to help with Poornima Institute of Engineering and Technology (PIET)-related queries. If you have any questions about admission, fees, hostel, placements, campus life, or any other PIET-specific topics, feel free to ask. If your question is not related to PIET, I'm unable to assist.
+---
+
+[2025-07-08T16:19:06.531Z]
+User: hmmm
+r u a bot
+Intent: unknown
+GPT: I am a bot designed to assist with Poornima Institute of Engineering and Technology (PIET)-related queries only.
+---
+
+[2025-07-08T16:28:57.496Z]
+User: purnima mein latest placement kitna hua in this year
+Intent: unknown
+GPT: The latest placement statistics for Poornima Institute of Engineering and Technology (PIET) for the current year are not available at this time. However, you can visit our official website or contact the placement cell for the most recent and accurate information.
+---
+
+[2025-07-08T16:29:32.720Z]
+User: bacchon ko kya scholarship mil sakti hai according tu performance
+Intent: unknown
+GPT: At Poornima Institute of Engineering and Technology (PIET), scholarships are offered based on merit and performance in Class 12th or JEE Main scores. For more details, please visit our website or contact the admission office.
+
+I'm designed to assist with Poornima Institute-related queries only.
+---
+
+[2025-07-08T16:31:12.357Z]
+User: purnima mein bacchon ke liye ncc aur nss vagaira kuchh hai kya
+Intent: unknown
+GPT: "Poornima Institute of Engineering and Technology (PIET) does not have NCC (National Cadet Corps) or NSS (National Service Scheme) units specifically for children. These programs are typically designed for students who are enrolled in schools or colleges. PIET offers such opportunities for its students."
+---
+
+[2025-07-10T08:24:58.962Z]
+User: suggestion
+Intent: unknown
+GPT: I'm designed to assist with Poornima Institute-related queries only. If you are seeking general advice or suggestions, I would recommend visiting a website that specializes in that area, such as a career guidance platform or a personal development blog.
+---

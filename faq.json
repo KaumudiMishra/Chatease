@@ -2,14 +2,18 @@
   "admission": {
     "about": "The college offers strong academics with qualified faculty, concept-based teaching, regular internal exams, and support through remedial classes. Classes run Mon–Fri with a good record of results.\nCall 099285 55222 to start admission at PIET, Jaipur",
     "process": "REAP 2023 is conducted for admission to B.Tech programs based on JEE Main scores or 12th percentage (Science). Direct admission is also available for limited seats.\nCall 099285 55222 to start admission at PIET, Jaipur",
-    "eligibility": "To be eligible for REAP 2025, candidates must pass 10+2 with Physics & Math as compulsory subjects and one optional (Chemistry/Biology/CS/Biotech). Minimum 45% marks (40% for reserved). JEE Main score may be required based on institute rules.\nThere is no maximum age restriction, candidate must be atleast 17 years old.\nCall 099285 55222 to start admission at PIET, Jaipur.",
+    "eligibility": "To be eligible for REAP 2025, candidates must pass 10+2 with Physics & Math as compulsory subjects and one optional (Chemistry/Biology/CS/Biotech). Minimum 45% marks (40% for reserved). JEE Main score may be required based on institute rules.\nCall 099285 55222 to start admission at PIET, Jaipur.",
     "direct admission": "Yes, direct admission is available on vacant seats left by students who withdraw. Eligible students can apply directly for those seats.\nCall 099285 55222 to start admission at PIET, Jaipur",
     "counselling procedure": "REAP counselling includes registration, merit list, choice filling, seat allotment & reporting. Steps:\n1. Create login ID\n2. Fill provisional form\n3. Upload documents\n4. Verification by counsellor\n5. Submit form\n6. Pay token fee.\nCall 099285 55222 to start admission at PIET, Jaipur.",
     "last year cut off": "There is no fixed cut-off. It varies each year based on student preferences, branch demand, and seat availability.\nCall 099285 55222 to start admission at PIET, Jaipur",
     "important dates": "REAP 2025 applications are open. Last date to register: July 2, 2025. Fee payment deadline: June 30, 2025. Merit list release: July 4, 2025.\nCall 099285 55222 to start admission at PIET, Jaipur",
     "documents required": "Required documents:\n- 10th & 12th marksheets\n- Class 10 certificate\n- Domicile certificate\n- Aadhaar card\n- JEE Main 2024 scorecard\n- Allotment letter\n- Passport size photos\n- Income, category, PWD, medical & ex-servicemen certificates (if applicable)\nCall 099285 55222 to start admission at PIET, Jaipur",
     "how to apply": "Call 099285 55222 to start the admission process for Poornima Institute of Engineering and Technology, Jaipur.\nCall 099285 55222 to start admission at PIET, Jaipur",
+    "seats": "Poornima Institute of Engineering and Technology (PIET) in Jaipur has a total B.Tech seat intake of 660. This is spread across various engineering specializations",
     "admission helpline": "Call 099285 55222 for any admission-related queries at Poornima Institute of Engineering and Technology, Jaipur.\nCall 099285 55222 to start admission at PIET, Jaipur"
+  },
+  "greet": {
+    "about": " Hello! 👋 I’m the official PIET Bot. Feel free to ask any query related to Poornima Institute of Engineering & Technology (PIET). For direct assistance, call us at 099285 55222."
   },
   "overview": {
     "about college": "Poornima Institute of Engineering and Technology, established in 2007, is a premier engineering college in Jaipur, Rajasthan. It offers quality education with a focus on innovation and research, and is NAAC accredited with an 'A' grade.",
@@ -47,7 +51,7 @@
     "wifi campus": "High-speed Wi-Fi is available across the entire campus, including hostels and common areas.",
     "labs and equipment": "Well-equipped labs for all engineering branches with modern tools and technologies.",
     "classrooms": "Smart classrooms with digital boards, projectors, and comfortable seating arrangements.",
-    "library": "A large library with a vast collection of books, journals, and digital resources for students.",
+    "library": "A large library with a vast collection of books, journals, and digital resources for students.The college library is open from 8 AM to 6 PM on all working days. ",
     "medical facilities": "On-campus clinic with a qualified doctor and ambulance service for emergencies.",
     "canteen": "Affordable canteen providing hygienic food options for students.",
     "gym": "Facilities for indoor and outdoor fitness with a modern gymnasium.\n Separate gyms for boys and girls, each equipped with a professional trainer for guided workouts.",
@@ -91,10 +95,10 @@
     "about": "📘 Academics at PIET: PIET offers strong academics supported by experienced faculty, practical learning methods, and consistent results. Students benefit from outcome-based teaching, regular assessments, remedial support, and a structured class schedule."
   },
   "placements": {
-    "about": "PIET has an excellent placement record with over 90% of students placed annually. The college offers dedicated training, internships, and support to ensure students are industry-ready. Top recruiters include Infosys, TCS, Capgemini, Wipro, L&T, and more.",
+    "about": "B.Tech graduates from Poornima Institute of Engineering and Technology (PIET) receive strong placement support, with top recruiters like Amazon, Infosys, TCS, Deloitte, and Ericsson. The highest package offered is INR 45 LPA, and the average ranges between INR 4–5 LPA. Around 89–95% of students get placed annually in roles such as software development, data analysis, and core engineering. The institute also encourages higher studies and entrepreneurship.",
     "placement record": "The college has a placement record of over 90% in core engineering and IT companies.",
     "top recruiters": "Top recruiters include Infosys, TCS, Wipro, Capgemini, L&T, Cognizant, Tech Mahindra, and ZS Associates.",
-    "highest package": "The highest package offered last year was ₹12 LPA (Lakhs Per Annum).",
+    "highest package": "The highest package offered last year was ₹45 LPA (Lakhs Per Annum).",
     "average package": "The average package offered to students is around ₹4.5 LPA.",
     "placement training": "Dedicated placement training programs are conducted from the second year onwards to prepare students for aptitude tests, interviews, and group discussions.",
     "internship support": "The college facilitates summer internships and semester-long industry projects with reputed companies.",
