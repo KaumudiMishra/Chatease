@@ -45,21 +45,15 @@ function getIntentResponse(message) {
   for (const [intent, synonyms] of Object.entries(intentMap)) {
     for (const synonym of synonyms) {
       if (lowerMessage.includes(synonym.toLowerCase())) {
-        const data = faq[intent];
-        if (!data) continue;
-
-        const subMatch = Object.entries(data).find(([key]) =>
-          lowerMessage.includes(key.toLowerCase())
-        );
-        if (subMatch) return subMatch[1];
-
-        return data.about || null;
+        const data = getNestedAnswer(faq, intent);
+        return typeof data === 'string' ? data : data?.about || null;
       }
     }
   }
 
   return null;
 }
+
 
 // ─── Fuzzy Match via Fuse.js ───────────────────────────────
 function fuzzyMatchIntent(userMsg) {
@@ -143,7 +137,7 @@ app.post('/incoming', async (req, res) => {
 
     try {
       const prompt = `
-      You are a professional chatbot for Poornima Institute of Engineering and Technology (PIET), Jaipur.
+      You are a professional chatbot for "Poornima Institute of Engineering and Technology (PIET), Jaipur".
 
       STRICT INSTRUCTIONS:
       -  DO NOT answer any question that is NOT about PIET (no fun facts, science, psychology, history, jokes, movies, religion, comparisons).
