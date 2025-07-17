@@ -5,3 +5,6 @@ serviceAccountKey.json
 .env
 package-lock.json
 package.json
+.venv
+fallback_log.txt
+learned_intents.jsonl
