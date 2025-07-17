@@ -1,145 +1,205 @@
 module.exports = {
   // Greet
-  "greet.about": ["hello", "hi", "hey", "piet bot", "greet", "who are you"],
+  "greet.about": ["hello", "hi", "hey", "who are you", "greet", "introduce yourself", "piet bot"],
+
+  // Overview
+  "overview.established_year": ["established", "foundation year", "when started"],
+  "overview.approvals_and_affiliation": ["approvals", "affiliations", "ugc", "rtu", "aicte", "autonomous"],
+  "overview.college_ranking": ["ranking", "rank", "top colleges", "piet rank"],
+  "overview.why_choose_us": ["why piet", "why join", "benefits of piet", "why choose piet"],
+  "overview.naac_accreditation": ["naac", "naac grade", "naac status"],
+  "overview.nba_accreditation": ["nba", "nba grade", "nba accreditation"],
+  "overview.about_college": ["about college", "college info", "college overview", "know piet","piet","tell me about piet"],
+
+  // Academics
+  "academics.about": ["academics", "teaching", "learning", "classes", "academics info"],
 
   // Admission
-  "admission.about": ["admission info", "admission details", "about admission", "admission summary"],
-  "admission.process": ["admission process", "how to apply", "application process", "apply now"],
-  "admission.eligibility": ["eligibility", "who can apply", "criteria", "minimum marks", "age"],
-  "admission.direct admission": ["direct admission", "management seat", "vacant seat", "spot admission"],
-  "admission.counselling procedure": ["counselling", "reap counselling", "choice filling", "seat allotment"],
-  "admission.last year cut off": ["cutoff", "last year cut off", "previous cutoff", "cut off rank"],
-  "admission.important dates": ["important dates", "admission last date", "counselling dates", "reap date"],
-  "admission.documents required": ["documents required", "needed docs", "certificate list"],
-  "admission.how to apply": ["how to apply", "apply now", "form filling", "submit form"],
-  "admission.seats": ["seat intake", "total seats", "btech seats", "how many seats"],
-  "admission.admission helpline": ["admission helpline", "admission contact", "whom to call for admission"],
+  "admission.process": ["admission process", "reap", "how to get in", "admission steps", "jee main admission"],
+  "admission.eligibility": ["eligibility", "who can apply", "criteria", "minimum marks"],
+  "admission.direct admission": ["direct admission", "spot seat", "vacant seats", "management seat"],
+  "admission.counselling procedure": ["counselling", "reap counselling", "choice filling", "seat allotment", "registration process"],
+  "admission.last year cut off": ["cutoff", "previous cutoff", "last year cut off", "cut off rank"],
+  "admission.important dates": ["important dates", "last date", "reap schedule", "application deadline"],
+  "admission.documents required": ["required documents", "document list", "certificates needed", "what to bring"],
+  "admission.how to apply": ["how to apply", "apply now", "submit form", "fill application"],
+  "admission.admission helpline": ["admission contact", "help number", "helpline", "admission phone"],
+  "admission.about": ["admission info", "about admission", "admission details", "piet admission"],
 
   // Courses
-  "courses.btech branches": ["btech branches", "available branches", "engineering courses", "streams"],
-  "courses.specializations": ["specializations", "cs special", "cse specialization", "iot", "ai", "cybersecurity"],
-  "courses.new courses": ["new courses", "new programs", "latest branch"],
-  "courses.ai ml courses": ["ai ml", "ml course", "ai course", "artificial intelligence machine learning"],
-  "courses.curriculum": ["curriculum", "subjects", "syllabus", "course structure"],
-  "courses.value added courses": ["value added", "certificate courses", "extra skills", "short term course"],
+  "courses.btech branches": ["btech branches", "engineering programs", "offered courses", "available streams"],
+  "courses.specializations": ["specializations", "cse specializations", "ai", "iot", "data science", "cybersecurity"],
+  "courses.new courses": ["new courses", "new programs", "recently added"],
+  "courses.ai ml courses": ["ai ml", "machine learning", "ai course", "ml available"],
+  "courses.curriculum": ["curriculum", "subjects", "syllabus", "course content"],
+  "courses.value added courses": ["value added", "extra courses", "certifications", "skill enhancement"],
 
-  // Courses Offered (non-BTech)
-  "courses_offered.bcom": ["bcom", "bcom course", "commerce course"],
-  "courses_offered.bba": ["bba", "management course", "bachelor of business"],
-  "courses_offered.mba": ["mba", "masters in business", "postgraduate management"],
-  "courses_offered.mtech": ["mtech", "masters in technology", "postgraduate engineering"],
+  // Courses Offered (Poornima University)
+  "courses_offered.bcom": ["bcom", "commerce course", "bachelor of commerce"],
+  "courses_offered.bba": ["bba", "management course", "bachelor of business administration"],
+  "courses_offered.mba": ["mba", "postgrad management", "masters business"],
+  "courses_offered.mtech": ["mtech", "masters tech", "postgrad engineering"],
 
   // Fees
-  "fees.about": ["fees", "total fee", "fee structure", "fee summary", "full fee"],
-  "fees.loan assistance": ["loan", "loan support", "loan facility", "education loan"],
-  "fees.payment options": ["payment", "how to pay", "can i pay online", "online fee", "pay", "installment"],
-  "fees.any hidden charges": ["hidden charges", "extra charges", "any other fee"],
+  "fees.loan_assistance": ["loan", "loan help", "education loan", "loan facility"],
+  "fees.payment_options": ["payment", "how to pay", "payment method", "online fee", "installments"],
+  "fees.any_hidden_charges": ["hidden charges", "extra fee", "unexpected charges"],
+  "fees.about": ["fees", "fee structure", "tuition fee", "full fee", "fee details"],
 
   // Facilities
-  "facilities.about": ["facilities", "what amenities", "services provided"],
-  "facilities.mess food": ["mess", "food", "canteen food", "hostel mess"],
-  "facilities.wifi campus": ["wifi", "internet", "campus internet"],
-  "facilities.labs and equipment": ["labs", "lab equipment", "engineering lab"],
-  "facilities.classrooms": ["classrooms", "smart classes", "teaching rooms"],
-  "facilities.library": ["library", "books", "reading area"],
-  "facilities.medical facilities": ["medical", "clinic", "healthcare"],
+  "facilities.mess food": ["mess", "food", "hostel food", "canteen"],
+  "facilities.wifi campus": ["wifi", "internet", "internet access"],
+  "facilities.labs and equipment": ["labs", "equipment", "engineering labs", "instruments"],
+  "facilities.classrooms": ["classrooms", "teaching rooms", "smart classes"],
+  "facilities.library": ["library", "books", "reading room"],
+  "facilities.medical facilities": ["medical", "clinic", "doctor", "healthcare"],
   "facilities.canteen": ["canteen", "snacks", "food court"],
-  "facilities.gym": ["gym", "fitness", "exercise room"],
-  "facilities.amphitheatre": ["amphitheatre", "open stage", "open air"],
-  "facilities.transport facility": ["bus", "transport", "college bus", "shuttle"],
+  "facilities.gym": ["gym", "fitness", "exercise", "workout"],
+  "facilities.about": ["facilities", "infrastructure", "hostels", "labs", "campus services"],
 
   // Campus
-  "campus.about": ["campus", "about campus", "campus overview", "inside campus", "campus info"],
-  "campus.location": ["location", "address", "where is piet"],
-  "campus.area": ["area", "campus size", "campus space"],
-  "campus.facilities": ["campus facilities", "infrastructure", "campus services"],
-  "campus.wifi": ["wifi", "internet in campus", "network"],
-  "campus.security": ["security", "guards", "safe campus", "cctv"],
-  "campus.environment": ["environment", "green campus", "eco friendly"],
-  "campus.visit": ["campus visit", "can i visit", "visit timing", "visit campus", "campus tour", "campus visit timing", "visit", "timings"],
+  "campus.location": ["location", "address", "where is piet", "campus address"],
+  "campus.area": ["campus area", "size", "campus space"],
+  "campus.facilities": ["campus facilities", "what's on campus", "amenities"],
+  "campus.wifi": ["campus wifi", "internet", "network"],
+  "campus.security": ["security", "safety", "cctv", "guards"],
+  "campus.environment": ["environment", "greenery", "pollution free", "eco friendly"],
+  "campus.visit": ["campus visit", "can i visit", "visit timing", "tour"],
+  "campus.about": ["about campus", "campus overview", "infrastructure", "campus details"],
 
-  // Events
-  "annual_fest.about": ["annual fest", "aarohan", "main fest", "dj night", "celebrity event", "organize fest", "fest month"],
-  "events.about": ["events", "tech events", "manthan", "hackathon", "robo fight", "kalanidhi"],
-  "freshers_party.about": ["freshers party", "pehla kadam", "welcome party", "freshers", "orientation"],
-  "farewell_party.about": ["farewell", "final year party", "last event", "goodbye party"],
+  // Fest & Events
+  "annual_fest.about": ["aarohan", "annual fest", "college fest", "main fest", "dj night", "celebrity event"],
+  "events.about": ["events", "tech fest", "hackathon", "competitions", "robo fight", "manthan"],
+  "freshers_party.about": ["freshers party", "orientation", "pehla kadam", "welcome party"],
+  "farewell_party.about": ["farewell", "goodbye party", "last event", "final year send-off"],
 
-  // Life at PIET
-  "student_life.about": ["student life", "activities", "engagement"],
-  "student_life.clubs and societies": ["clubs", "student clubs", "societies"],
-  "student_life.technical events": ["technical events", "tech competition", "hackathon", "robotics"],
-  "student_life.cultural activities": ["cultural", "festivals", "music", "dance", "nukkad"],
-  "student_life.sports activities": ["sports", "games", "football", "basketball", "volleyball"],
-  "student_life.student council": ["student council", "committee", "leadership"],
-  "student_life.mentorship programs": ["mentorship", "senior help", "guidance program"],
+  // Student Life
+  "student_life.clubs and societies": ["clubs", "societies", "student clubs", "activities"],
+  "student_life.technical_events": ["tech events", "technical", "hackathon", "robotics"],
+  "student_life.cultural_activities": ["cultural", "dance", "music", "drama", "fashion"],
+  "student_life.sports_activities": ["sports", "games", "football", "cricket", "basketball"],
+  "student_life.student_council": ["student council", "committee", "leadership group"],
+  "student_life.mentorship_programs": ["mentorship", "senior support", "peer mentor", "guidance"],
+  "student_life.about": ["student life", "campus life", "engagement", "extracurriculars"],
+
 
   // Placements
-  "placements.about": ["placements", "placement record", "placement info"],
-  "placements.placement record": ["placement record", "how many placed"],
-  "placements.top recruiters": ["top recruiters", "companies", "who comes"],
-  "placements.highest package": ["highest package", "top salary", "max offer"],
-  "placements.average package": ["average package", "average salary", "mean ctc"],
-  "placements.placement training": ["placement training", "preparation", "mock test"],
-  "placements.internship support": ["internship", "summer internship", "training"],
-  "placements.training modules": ["training modules", "aptitude", "resume", "mock interview"],
-  "placements.placement cell": ["placement cell", "tpo", "placement office"],
+  "placements.placement_record": ["placement record", "placement rate", "core branch placement"],
+  "placements.top_recruiters": ["top recruiters", "companies visiting", "recruiters list"],
+  "placements.highest_package": ["highest package", "max salary", "top offer"],
+  "placements.average_package": ["average package", "mean salary", "typical ctc"],
+  "placements.number_of_offers": ["number of offers", "total jobs", "how many offers"],
+  "placements.placement_training": ["placement training", "interview prep", "aptitude training", "mock tests"],
+  "placements.internship_support": ["internship", "training", "industrial training", "ppo"],
+  "placements.training_modules": ["training modules", "placement support", "resume building", "mock interviews"],
+  "placements.placement_cell": ["placement cell", "tpo", "placement office", "placement help"],
+  "placements.about": ["placement", "job", "recruitment", "career", "placement summary"],
 
-  // Other Info
-  "pbic.about": ["pbic", "startup", "incubation", "entrepreneurship", "business"],
-  "student_support.about": ["student support", "help", "counselling", "career guidance"],
-  "clubs.about": ["clubs", "extra activities", "hobby", "coding club", "dance club"],
-  "help.about": ["help", "support", "contact", "phone", "email"],
-  "help.admission helpline": ["admission contact", "call for admission"],
-  "help.email": ["email", "mail id"],
+  // PBIC (Incubation)
+  "pbic.purpose": ["pbic purpose", "why pbic", "startup goal"],
+  "pbic.services": ["pbic services", "incubation help", "startup support", "funding"],
+  "pbic.eligibility": ["pbic eligibility", "who can join pbic", "apply pbic"],
+  "pbic.success_stories": ["pbic success", "pbic startups", "achievements"],
+  "pbic.contact": ["pbic contact", "pbic email", "incubation contact"],
+  "pbic.about": ["pbic", "incubation center", "startup hub", "entrepreneurship support"],
+
+  // Student Support
+  "student_support.counseling_services": ["counseling", "mental health", "therapy", "stress help"],
+  "student_support.mentorship_programs": ["mentorship", "junior guidance", "peer support"],
+  "student_support.career_guidance": ["career help", "career guidance", "resume session", "job advice"],
+  "student_support.financial_aid": ["scholarship", "financial help", "fee concession"],
+  "student_support.grievance_redressal": ["complaint", "grievance", "raise issue", "student problem"],
+  "student_support.about": ["student support", "student help", "welfare", "guidance services"],
+
+  // Clubs
+  "clubs.council_structure": ["student council", "club hierarchy", "club leadership"],
+  "clubs.literary": ["literary club", "writing", "debate", "reading"],
+  "clubs.aptineus": ["aptitude club", "aptineus", "reasoning"],
+  "clubs.udaan_aero_modelling": ["udaan", "aero modeling", "drone club"],
+  "clubs.helping_hands": ["helping hands", "social club", "volunteer"],
+  "clubs.joshiley_dram_club": ["drama", "acting", "joshiley"],
+  "clubs.ebug": ["ebug", "coding club", "programming"],
+  "clubs.perfect_pixels": ["photography", "perfect pixels", "visual club"],
+  "clubs.sports_club": ["sports club", "games", "athletics"],
+  "clubs.origin_club": ["origin", "eco club", "green club"],
+  "clubs.cyborgs": ["robotics", "cyborgs", "automation club"],
+  "clubs.aws": ["aws club", "cloud club", "amazon web services"],
+  "clubs.ieee": ["ieee", "electronics", "tech club"],
+  "clubs.acm": ["acm", "coding society", "computing research"],
+  "clubs.graduate_gateway": ["graduate gateway", "study abroad", "gre prep"],
+  "clubs.microsoft_learn_student_ambassador": ["microsoft student", "mlsa", "tech leader"],
+  "clubs.spic_macay": ["spic macay", "classical music", "cultural"],
+  "clubs.vibrant_vision": ["vibrant vision", "art club", "design"],
+  "clubs.about": ["clubs", "student clubs", "activities", "societies"],
+
+  // Help & Contact
+  "help.admission helpline": ["admission helpline", "contact number", "phone number"],
+  "help.email": ["email", "mail", "support email", "contact mail"],
   "help.website": ["website", "official site", "college site"],
-  "help.campus visit": ["campus visit", "timings", "visiting hours"],
-  "help.location": ["location", "campus address"],
-  "help.student support": ["student support", "dsw", "hostel support"],
-  "help.placements office": ["tpo", "placement contact", "placement help"],
-  "help.social media": ["instagram", "facebook", "social links", "follow you"],
+  "help.campus visit": ["campus visit", "visit hours", "visit piet", "tour"],
+  "help.student support": ["student support email", "hostel contact", "mess query"],
+  "help.placements office": ["placement contact", "tpo email", "placement number"],
+  "help.social media": ["instagram", "facebook", "social media", "follow piet"],
+  "help.about": ["help", "contact", "support info", "query help"],
 
-  "recognition_and_affiliation.about": ["recognition", "ugc", "aicte", "approval", "affiliation"],
-  "management_body.about": ["management", "who manages", "advisory board"],
+  // Recognition & Affiliation
+  "recognition_and_affiliation.about": ["recognition", "affiliation", "ugc approved", "aicte", "naac approved"],
+
+  // Management
+  "management_body.about": ["management", "advisory board", "trustees", "directors"],
 
   // Leadership
-  "leadership.principal": ["principal", "college head", "director"],
-  "leadership.registrar_ombudsperson": ["registrar", "ombudsperson", "discipline"],
-  "leadership.controller_of_examination": ["controller", "exam cell", "exam head"],
-  "leadership.governing_council": ["governing council", "board members"],
+  "leadership.principal": ["principal", "head of college", "dinesh goyal"],
+  "leadership.registrar_ombudsperson": ["registrar", "ombudsperson", "dr balwan"],
+  "leadership.controller_of_examination": ["controller of exam", "coe", "nitin mukesh"],
+  "leadership.governing_council": ["governing council", "council members", "chairperson"],
 
   // Departments
-  "departments.applied_sciences": ["applied sciences", "first year dept", "math physics"],
-  "departments.computer_science": ["computer science", "cse", "cs dept"],
-  "departments.ai_ds": ["ai ds", "data science", "artificial intelligence"],
-  "departments.iot": ["iot", "internet of things"],
-  "departments.cybersecurity": ["cybersecurity", "cyber", "network security"],
+  "departments.applied_sciences": ["applied sciences", "foundation subjects", "maths", "physics"],
+  "departments.computer_science": ["cse", "computer science", "cs department"],
+  "departments.ai_ds": ["ai ds", "artificial intelligence", "data science dept"],
+  "departments.iot": ["iot department", "internet of things", "iot branch"],
+  "departments.cybersecurity": ["cybersecurity", "security department", "cyber dept"],
 
-  // Innovation & Research
-  "innovation_research.about": ["innovation", "research"],
-  "innovation_research.aicte_idea_lab": ["idea lab", "aicte lab", "patent", "usp"],
-  "innovation_research.funding_incubation": ["funding", "startup fund", "incubation"],
-  "innovation_research.research_development_cell": ["r&d cell", "research work"],
-  "innovation_research.iic": ["iic", "innovation council", "iic piet"],
-  "innovation_research.ipr": ["ipr", "patent", "copyright", "intellectual"],
-  "innovation_research.industry_institute_interaction_practices": ["iii", "industry training", "i3 day"],
-  "innovation_research.partners_industry_interaction": ["industry partners", "tie ups", "collaboration"],
+ // Innovation, Research & Entrepreneurship
+  "innovation_research.aicte_idea_lab": ["idea lab", "aicte lab", "innovation lab", "3d printer lab"],
+  "innovation_research.funding_incubation": ["funding", "incubation", "bootcamp", "research grants"],
+  "innovation_research.research_development_cell": ["r&d", "research cell", "publications", "research help"],
+  "innovation_research.iic": ["iic", "innovation council", "moe innovation", "iic rating"],
+  "innovation_research.ipr": ["ipr", "patents", "copyright", "trademark", "intellectual property"],
+  "innovation_research.industry_institute_interaction_practices": ["i3", "industry training", "industry practice"],
+  "innovation_research.partners_industry_interaction": ["industry tieups", "collaboration", "industry interaction", "company tieups"],
+  "innovation_research.about": ["innovation", "entrepreneurship", "research", "idea lab summary"],
 
   // Chapters
-  "chapters.ISTE_Chapter": ["iste", "iste chapter"],
-  "chapters.IEEE_Chapter": ["ieee", "ieee chapter"],
-  "chapters.ACM_Chapter": ["acm", "acm chapter"],
-  "chapters.IETE_Chapter": ["iete", "iete chapter"],
-  "chapters.Poornima_Electoral_Literacy_Forum": ["electoral", "voting", "political awareness"],
+  "chapters.ISTE_Chapter": ["iste", "iste chapter", "professional values", "technical workshops"],
+  "chapters.IEEE_Chapter": ["ieee chapter", "ieee activities", "electronics club"],
+  "chapters.ACM_Chapter": ["acm", "acm chapter", "computing society"],
+  "chapters.IETE_Chapter": ["iete", "telecom club", "electronics society"],
+  "chapters.Poornima_Electoral_Literacy_Forum": ["electoral literacy", "voting awareness", "poornima election club"],
 
-  // Misc
-  "accreditation.about": ["accreditation", "naac", "nba", "iso", "ranking"],
-  "alumni.about": ["alumni", "ex students", "old students", "past students"],
-  "anti_ragging.about": ["ragging", "anti ragging", "safety", "complaint", "proctor"],
-  "poornima_group.about": ["poornima university", "pce", "group", "pu", "college compare", "pce vs piet", "pu vs piet", "poornima group", "university comparison", "university"],
-  "comparison_colleges.piet": ["comparison", "compare colleges", "better college", "piet vs pu", "why piet"],
-  "dress_code.about": ["dress code", "uniform", "what to wear", "college dress", "dress policy", "dress"],
-  "hostel_info.about": ["hostel info", "hostel", "hostel fee", "hostel fees", "hostel fest", "ojas", "hostel life", "accommodation"],
-  "transport.about": ["transport", "bus service", "college bus", "do you provide transport", "transportation facility", "bus timing", "bus available"],
-  "tcs_ion.about": ["tcs ion", "student app", "notes app", "college portal"],
-  "sports.about": ["sports", "games available", "football ground", "cricket match", "intercollege tournament", "college sports", "do you have sports facilities", "indoor outdoor games"]
+  // Accreditation
+  "accreditation.about": ["accreditation", "naac", "nba", "ranking", "qs igauge", "nirf"],
+
+  // Alumni
+  "alumni.about": ["alumni", "past students", "alumni events", "famous alumni", "pias"],
+
+  // Anti-ragging
+  "anti_ragging.about": ["ragging", "anti-ragging", "discipline", "fines", "ragging contacts"],
+
+  // Poornima Group
+  "poornima_group.about": ["poornima group", "piet vs pce", "poornima university", "group colleges"],
+
+  // Dress Code
+  "dress_code.about": ["dress code", "uniform days", "casual dress", "clothing rules"],
+
+  // Hostel Info
+  "hostel_info.about": ["hostel", "hostel fee", "ac room", "oja fest", "hostel fest"],
+
+  // Transport
+  "transport.personal commute": ["own vehicle", "personal transport", "parking", "car"],
+  "transport.about": ["transport", "college bus", "routes", "bus contact", "transport officer"],
+
+  // Refund Policy
+  "refund_policy.about": ["refund", "withdraw admission", "fee refund", "cancel admission"]
 };

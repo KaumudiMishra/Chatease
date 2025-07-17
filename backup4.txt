@@ -1,3 +1,7 @@
+// ai learning wala code 
+
+
+
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -5,6 +9,7 @@ const { MessagingResponse } = require('twilio').twiml;
 const admin = require('firebase-admin');
 const axios = require('axios');
 const fs = require('fs');
+const Fuse = require('fuse.js');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
@@ -20,7 +25,6 @@ const db = admin.firestore();
 // ─── Load FAQ Data ─────────────────────────────────────────
 const faq = require('./faq.json');
 
-// Recursively extract all nested keys like "admission.process", "fees.structure"
 function extractAllKeys(obj, prefix = '') {
   return Object.keys(obj).flatMap(key => {
     const fullKey = prefix ? `${prefix}.${key}` : key;
@@ -31,22 +35,63 @@ function extractAllKeys(obj, prefix = '') {
 }
 const VALID_KEYS = extractAllKeys(faq);
 
-// ─── Get Answer for Nested Keys ────────────────────────────
 function getNestedAnswer(obj, path) {
-  return path.split('.').reduce((o, key) => (o && o[key] ? o[key] : null), obj);
+  const result = path.split('.').reduce((o, key) => (o && o[key] ? o[key] : null), obj);
+  return typeof result === 'string' ? result : null;
 }
 
-// ─── GPT-based Intent Classifier ───────────────────────────
+// ─── Learned Phrases ───────────────────────────────────────
+const learnedPhrases = [];
+if (fs.existsSync('./learned_intents.jsonl')) {
+  fs.readFileSync('./learned_intents.jsonl', 'utf8')
+    .split('\n')
+    .filter(Boolean)
+    .forEach(line => {
+      try {
+        const item = JSON.parse(line);
+        learnedPhrases.push({ phrase: item.user.toLowerCase(), intent: item.intent });
+      } catch (e) {
+        console.error("❌ Error parsing learned intent line:", e.message);
+      }
+    });
+}
+
+function fuzzyLearnedMatch(userMsg) {
+  const fuse = new Fuse(learnedPhrases, {
+    keys: ['phrase'],
+    includeScore: true,
+    threshold: 0.33,
+  });
+  const results = fuse.search(userMsg.toLowerCase());
+  if (results.length > 0) {
+    console.log(`🔍 Learned Match: ${results[0].item.intent} | Score: ${results[0].score}`);
+    return results[0].item.intent;
+  }
+  return null;
+}
+
+function fuzzyKeyMatch(userMsg) {
+  const fuse = new Fuse(VALID_KEYS, {
+    includeScore: true,
+    threshold: 0.33,
+  });
+  const results = fuse.search(userMsg.toLowerCase());
+  if (results.length > 0) {
+    console.log(`🔍 Key Match: ${results[0].item} | Score: ${results[0].score}`);
+    return results[0].item;
+  }
+  return null;
+}
+
 async function classifyIntent(userInput) {
   const prompt = `
-You're an intent classifier. From the list below, return the closest matching key (case-insensitive) based on user input.
-Only choose from the list. If no good match, return "unknown".
+You are an intent-mapping assistant. Your job is to match user input to one of the following keys exactly.
 
 Valid Keys:
-${VALID_KEYS.join(', ')}
+${VALID_KEYS.join('\n')}
 
-User Message: "${userInput}"
-Matched Key (one of above):`.trim();
+User Input: "${userInput}"
+Which key does this best match? Respond with ONLY the key or "unknown".`.trim();
 
   try {
     const { data } = await axios.post(
@@ -54,8 +99,8 @@ Matched Key (one of above):`.trim();
       {
         model: 'mistralai/mistral-7b-instruct',
         messages: [{ role: 'user', content: prompt }],
-        max_tokens: 10,
-        temperature: 0,
+        max_tokens: 20,
+        temperature: 0.1,
       },
       {
         headers: {
@@ -66,15 +111,10 @@ Matched Key (one of above):`.trim();
     );
 
     let raw = data.choices[0].message.content.trim().toLowerCase();
-
-    // Handle partial or fuzzy matches
     if (!VALID_KEYS.includes(raw)) {
-      const match = VALID_KEYS.find(k =>
-        k.startsWith(raw) || raw.includes(k) || raw === k.split('.')[0]
-      );
+      const match = VALID_KEYS.find(k => k.startsWith(raw) || raw.includes(k));
       return match || 'unknown';
     }
-
     return raw;
   } catch (err) {
     console.error('❌ GPT classification error:', err.message);
@@ -82,30 +122,35 @@ Matched Key (one of above):`.trim();
   }
 }
 
-// ─── Incoming WhatsApp Message Handler ─────────────────────
 app.post('/incoming', async (req, res) => {
   const twiml = new MessagingResponse();
-  const userMsg = req.body.Body.trim().toLowerCase();
+  const userMsg = req.body.Body.trim();
 
   console.log(`📩 Incoming message: "${userMsg}"`);
 
-  const intent = await classifyIntent(userMsg);
+  let intent = fuzzyLearnedMatch(userMsg);
+
+  if (!intent) intent = fuzzyKeyMatch(userMsg);
+
+  if (!intent) intent = await classifyIntent(userMsg);
   console.log(`🧠 Intent Detected: ${intent}`);
 
   let response = getNestedAnswer(faq, intent);
 
   if (!response) {
-    console.log("⚠️ No static match. Using GPT fallback restricted to PIET context.");
-
+    console.log("⚠ No match found. Using GPT fallback restricted to PIET context.");
     try {
       const prompt = `
-      You are a helpful chatbot for *Poornima Institute of Engineering and Technology (PIET), Jaipur*.
-      You are NOT allowed to answer anything unrelated to PIET.
-      Reply in 1–2 short lines. If user query is not related to PIET, respond with:
-      "I'm designed to help with Poornima Institute-related queries only."
+You are a professional chatbot for "Poornima Institute of Engineering and Technology (PIET), Jaipur".
 
-      User Query: "${userMsg}"
-      Response:`.trim();
+STRICT INSTRUCTIONS:
+- DO NOT answer any question that is NOT about PIET (no fun facts, science, psychology, history, jokes, movies, religion, comparisons).
+- ONLY reply if the question is about PIET's admission, fees, hostel, placements, campus life, etc.
+- If a user asks anything unrelated to PIET, simply respond:
+"I'm designed to assist with Poornima Institute-related queries only."
+
+User Query: "${userMsg}"
+Response:`.trim();
 
       const { data } = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',
@@ -124,12 +169,17 @@ app.post('/incoming', async (req, res) => {
       );
 
       response = data.choices[0].message.content.trim();
-      console.log(`💡 GPT Response: ${response}`);
+      console.log(`💡 GPT Fallback Response: ${response}`);
 
       fs.appendFileSync(
         'fallback_log.txt',
-        `\n[${new Date().toISOString()}]\nUser: ${userMsg}\nIntent: ${intent}\nGPT: ${response}\n---`
+        `\n[${new Date().toISOString()}]\nUser: ${userMsg}\nIntent: ${intent}\nGPT: ${response}\n---\n`
       );
+      fs.appendFileSync(
+        'learned_intents.jsonl',
+        JSON.stringify({ user: userMsg, intent: intent, answer: response }) + "\n"
+      );
+      learnedPhrases.push({ phrase: userMsg.toLowerCase(), intent });
     } catch (err) {
       console.error("❌ GPT fallback error:", err.message);
       response = "Sorry, I'm having trouble fetching that information. Please try again later.";
@@ -142,191 +192,7 @@ app.post('/incoming', async (req, res) => {
   res.end(twiml.toString());
 });
 
-// ─── Server Start ───────────────────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
 });
-
-
-
-
-{
-  "admission": {
-    "about": "The college offers strong academics with qualified faculty, concept-based teaching, regular internal exams, and support through remedial classes. Classes run Mon–Fri with a good record of results.",
-    "process": "REAP 2023 is conducted for admission to B.Tech programs based on JEE Main scores or 12th percentage (Science). Direct admission is also available for limited seats.",
-    "eligibility": "To be eligible for REAP 2025, candidates must pass 10+2 with Physics & Math as compulsory subjects and one optional (Chemistry/Biology/CS/Biotech). Minimum 45% marks (40% for reserved). JEE Main score may be required based on institute rules.",
-    "direct admission": "Yes, direct admission is available on vacant seats left by students who withdraw. Eligible students can apply directly for those seats.",
-    "counselling procedure": "REAP counselling includes registration, merit list, choice filling, seat allotment & reporting. Steps:\n1. Create login ID\n2. Fill provisional form\n3. Upload documents\n4. Verification by counsellor\n5. Submit form\n6. Pay token fee.\nCall 099285 55222 to start admission at PIET, Jaipur.",
-    "last year cut off": "There is no fixed cut-off. It varies each year based on student preferences, branch demand, and seat availability.",
-    "important dates": "REAP 2025 applications are open. Last date to register: July 2, 2025. Fee payment deadline: June 30, 2025. Merit list release: July 4, 2025.",
-    "documents required": "Required documents:\n- 10th & 12th marksheets\n- Class 10 certificate\n- Domicile certificate\n- Aadhaar card\n- JEE Main 2024 scorecard\n- Allotment letter\n- Passport size photos\n- Income, category, PWD, medical & ex-servicemen certificates (if applicable)",
-    "how to apply": "Call 099285 55222 to start the admission process for Poornima Institute of Engineering and Technology, Jaipur.",
-    "admission helpline": "Call 099285 55222 for any admission-related queries at Poornima Institute of Engineering and Technology, Jaipur."
-  },
-  "overview": {
-    "about college": "Poornima Institute of Engineering and Technology, established in 2007, is a premier engineering college in Jaipur, Rajasthan. It offers quality education with a focus on innovation and research, and is NAAC accredited with an 'A' grade.",
-    "established year": "Established in 2007.",
-    "approvals and affiliation": "Approved by AICTE, affiliated to RTU Kota, accredited by NAAC and NBA.",
-    "college location": "ISI - 2, Poornima Marg, Sitapura, Jaipur, Rajasthan 302022",
-    "college ranking": "Ranked among the top private engineering colleges in Rajasthan.",
-    "why choose us": "Choose PIET for excellent placements, state-of-the-art infrastructure, experienced faculty, and vibrant student life.",
-    "NAAC accreditation": "PIET is accredited by NAAC with a 'A' grade, ensuring quality education and continuous improvement."
-  },
-  "fees": {
-    "about": "Total B.Tech annual fee is ₹1,19,805, with hostel charges ranging ₹1.05–1.72 lakh/year based on room type. Scholarships and loan assistance are available. Fee can be paid online/offline with no hidden charges.",
-    "structure": "Fee Structure for Academic Year 2025–26:\n- Tuition Fee: ₹85,575/year\n- Development Fee: ₹12,835/year\n- NAAC Accreditation Fee: ₹21,395/year\n- Total Annual Fee (All B.Tech CSE/AI/DS/IoT programs): ₹1,19,805\n- Autonomous Institute Fee: ₹8,560/year\n\nOther Fees (One-Time/Recurring):\n- Registration Charges: ₹1,500 (One-time)\n- RTU Development Fee: ₹2,500 (One-time)\n- Uniform Fee: ₹4,000 (One-time)\n- Activity Fee: ₹5,000 (Per annum)\n- RTU Exam & Enrollment Fee: Actuals as per RTU",
-    "hostel fee": "Hostel fees for 2025–26 vary by room type:\n- Double Occupancy (Fan): ₹1,05,000 to ₹1,47,000/year\n- Triple Occupancy: ₹1,05,000 to ₹1,47,000/year\n- Single Occupancy: ₹1,30,000 to ₹1,72,000/year\nRooms available with fan, air cooling, or AC, with options for attached or common washrooms. Fee includes 4 installments.",
-    "scholarships available": "Yes, scholarships are available based on good academic performance in 10th & 12th. Students from financially weaker sections also get fee concessions under EWS and related schemes.",
-    "loan assistance": "Yes, loan assistance is available. The college supports students in applying for education loans through partnered banks.",
-    "payment options": "Fee can be paid both online and offline. Online modes include net banking, UPI, and card payments. Offline options include DD and cash at campus.",
-    "any hidden charges": "No, there are no hidden charges. All fees and costs are clearly mentioned in the official fee structure."
-  },
-  "courses": {
-    "btech branches": "Poornima Institute offers various B.Tech programs focused on Computer Science and its emerging specializations. The available branches include: CSE (Core), CSE (Regional Language Computing), CSE (IoT – Internet of Things), CSE (Cybersecurity), CSE (AI & DS – Artificial Intelligence and Data Science), CSE (AI), and CSE (Data Science). These programs are designed to meet the demands of the tech industry and ensure students are future-ready.",
-    "specializations": "Specializations offered under B.Tech CSE include:\n- IoT\n- Cybersecurity\n- AI & DS (Artificial Intelligence and Data Science)\n- Data Science\n- Regional Language-based Computing",
-    "new courses": "Yes, Artificial Intelligence (AI) has been recently introduced as a dedicated course under B.Tech CSE.",
-    "ai ml courses": "No, AI/ML is not offered as a separate course, but related subjects are included within AI & Data Science specialization.",
-    "curriculum": "The B.Tech curriculum includes core subjects, electives, and mandatory industrial training (I3) along with compulsory internships, which greatly support placement preparation.",
-    "value added courses": "Yes, the college offers value-added and skill-based certificate courses to enhance technical and professional skills alongside the B.Tech curriculum."
-  },
-  "facilities": {
-    "about": "Poornima Institute offers top-notch facilities including separate hostels for boys and girls with modern amenities, nutritious vegetarian mess food, and a large library stocked with books and digital resources. The entire campus is Wi-Fi enabled, including hostels and academic areas. Well-equipped labs and smart classrooms enhance learning experiences, while an on-campus medical clinic ensures health support. The campus also has a modern gymnasium, hygienic canteen, and transportation services for Jaipur-based students,For more details, contact dsw@poornima.org",
-    "hostel facility": "Separate hostels for boys and girls are available with modern amenities, including Wi-Fi, study rooms, and recreational areas. For more details, contact dsw@poornima.org.",
-    "mess food": "Nutritious vegetarian meals are served in the mess, with options for special dietary requirements.",
-    "wifi campus": "High-speed Wi-Fi is available across the entire campus, including hostels and common areas.",
-    "labs and equipment": "Well-equipped labs for all engineering branches with modern tools and technologies.",
-    "classrooms": "Smart classrooms with digital boards, projectors, and comfortable seating arrangements.",
-    "library": "A large library with a vast collection of books, journals, and digital resources for students.",
-    "medical facilities": "On-campus clinic with a qualified doctor and ambulance service for emergencies.",
-    "canteen": "Affordable canteen providing hygienic food options for students.",
-    "gym": "Facilities for indoor and outdoor fitness with a modern gymnasium.",
-    "transport facility": "Bus service available for students commuting from various parts of Jaipur."
-  },
-  "campus": {
-    "about": "Poornima Institute of Engineering & Technology has a spacious, green campus located at ISI - 2, Poornima Marg, Sitapura, Jaipur. The campus includes hostels, academic blocks, cafeteria, auditorium, gym, medical room, and sports ground. It offers high-speed Wi-Fi, 24x7 security with CCTV, and an eco-friendly environment. You can visit the campus between 10 AM to 4 PM from Monday to Saturday.",
-    "location": "ISI - 2, Poornima Marg, Sitapura, Jaipur, Rajasthan 302022",
-    "area": "Spread across a large green campus in Sitapura Education Zone.",
-    "facilities": "Includes hostels, academic blocks, cafeteria, auditorium, gym, medical room, and sports ground.",
-    "wifi": "High-speed Wi-Fi is available throughout the campus including classrooms and hostels.",
-    "security": "24x7 security with CCTV monitoring and guard supervision.",
-    "environment": "Pollution-free, eco-friendly campus with modern infrastructure and peaceful study environment.",
-    "visit": "You can visit our campus Monday to Saturday between 10 AM to 4 PM for a guided tour."
-  },
-  "annual_fest": {
-    "about": "Aarohan is the annual cultural and technical fest of Poornima Institute, featuring celebrity performances, tech events, cultural competitions, and vibrant student participation. Stars like Sunidhi Chauhan, Javed Ali, Sanam Band, and Seedhe Maut have performed live. Rajasthan Royals even launched their jersey here. The fest blends entertainment, innovation, and talent on a national scale.",
-    "name": "Aarohan",
-    "year": 2025,
-    "theme": "Vibrant Celebration of Culture and Technology",
-    "highlights": "Live performances by Sunidhi Chauhan, Javed Ali, Sanam Band, and Seedhe Maut\nRajasthan Royals jersey launch on campus\nCultural nights, dance competitions, and fashion shows\nNational-level technical competitions and workshops",
-    "celebrities": "Sunidhi Chauhan, Javed Ali, Sanam Band, Seedhe Maut and many other renowned celebrities and top influencers have also graced PIET events over the years",
-    "tech_events": "Hackathons\nRobo Race\nCode Wars\nGaming Zone",
-    "cultural_events": "PIET hosts vibrant cultural events including dance battles, drama, singing competitions, fashion shows, and grand fresher's/farewell parties with DJ nights and celebrity performances.",
-    "organizers": "Poornima Institute of Engineering & Technology",
-    "official_website": "https://aarohan.poornima.org/piet/"
-  },
-  "student_life": {
-    "about": "Student life at PIET is vibrant with active clubs, tech and cultural events, sports, mentorship, and a student council that fosters leadership and engagement.",
-    "clubs and societies": "PIET has various student clubs including coding, robotics, cultural, music, dance, and photography clubs. These clubs organize events, competitions, and workshops throughout the year.",
-    "technical events": "Regular technical events like hackathons, coding contests, and workshops are conducted to enhance practical skills.",
-    "cultural activities": "Cultural nights, fashion shows, dance competitions, and music events are organized to promote creativity and talent.",
-    "sports activities": "The college encourages sports participation with facilities for cricket, football, basketball, volleyball, badminton, and athletics.",
-    "student council": "An active student council represents student interests and organizes various events and activities.",
-    "mentorship programs": "Senior students mentor juniors through structured mentorship programs to help them adapt to college life."
-  },
-  "academics": {
-    "faculty quality": "Highly qualified faculty with extensive industrial experience and strong academic credentials.",
-    "teaching methodology": "Focus on concept clarity, practical applications, projects, and outcome-based learning.",
-    "class schedule": "Classes run Monday to Friday, with 5-6 periods per day depending on the timetable.",
-    "academic support": "Remedial classes and doubt-clearing sessions are available for students needing extra help.",
-    "internals and exams": "2 internal assessments per semester followed by final university examinations.",
-    "result history": "The college has a consistent record of good results in university exams with many students achieving top ranks."
-  },
-  "placements": {
-    "about": "PIET has an excellent placement record with over 90% of students placed annually. The college offers dedicated training, internships, and support to ensure students are industry-ready. Top recruiters include Infosys, TCS, Capgemini, Wipro, L&T, and more.",
-    "placement record": "The college has a placement record of over 90% in core engineering and IT companies.",
-    "top recruiters": "Top recruiters include Infosys, TCS, Wipro, Capgemini, L&T, Cognizant, Tech Mahindra, and ZS Associates.",
-    "highest package": "The highest package offered last year was ₹12 LPA (Lakhs Per Annum).",
-    "average package": "The average package offered to students is around ₹4.5 LPA.",
-    "placement training": "Dedicated placement training programs are conducted from the second year onwards to prepare students for aptitude tests, interviews, and group discussions.",
-    "internship support": "The college facilitates summer internships and semester-long industry projects with reputed companies.",
-    "training modules": "Modules include soft skills, aptitude, coding practice, mock interviews, resume building, and technical workshops.",
-    "placement cell": "A dedicated Training & Placement Cell works full-time to coordinate with recruiters and provide guidance to students."
-  },
-  "pbic": {
-    "about": "Poornima Business Incubation Center (PBIC) is an in-house startup and innovation hub at PIET that supports student entrepreneurship through mentorship, funding, and workspace. It empowers students to turn ideas into real businesses.",
-    "full_form": "Poornima Business Incubation Center",
-    "purpose": "To nurture entrepreneurial ideas and provide a platform for students to develop startups from scratch.",
-    "services": "1.Startup mentorship by industry experts \n2.Seed funding support\n3.Co-working space for student startups\n4.Workshops and entrepreneurship bootcamps\n5.Investor networking opportunities",
-    "eligibility": "All students of PIET with innovative ideas are eligible to apply for incubation support through PBIC.",
-    "success_stories": "Several startups from PBIC have gone on to secure external funding and gain national-level recognition.",
-    "contact": "For more information, contact pbic@poornima.org or visit the PBIC office inside the PIET campus."
-  },
-  "student_support": {
-    "about": "Poornima Institute provides comprehensive student support services including academic counseling, mental health support, career guidance, and financial aid. The college has a dedicated Student Welfare Department to assist students in all aspects of their college life.",
-    "counseling_services": "Professional counselors are available for academic and personal counseling to help students manage stress and academic pressures.",
-    "mentorship_programs": "Senior students mentor juniors through structured programs to help them adapt to college life and academics.",
-    "career_guidance": "Regular workshops and seminars on career planning, resume building, and interview preparation are conducted.",
-    "financial_aid": "Scholarships and fee concessions are available for deserving students based on merit and financial need.",
-    "grievance_redressal": "A grievance redressal mechanism is in place to address student concerns promptly."
-  },
-  "clubs": {
-    "about": "Poornima Institute has a variety of active student clubs catering to different interests such as dance, singing, music, photography, coding, drama, business, robotics, and literature. These clubs conduct regular events, workshops, and competitions, encouraging students to explore their passions beyond academics",
-    "technical": "Coding Club, Robotics Club, AI & ML Club",
-    "cultural": "Dance Club, Music Club, Drama Club, Fashion Club",
-    "business": "Poornima Business Incubation Center (PBIC)",
-    "creative": "Photography Club, Literature Club"
-  },
-  "help": {
-    "about": "📞 For any queries, you can reach Poornima Institute of Engineering & Technology via:\n\n• Admission Helpline: 099285 55222\n• Email: info@poornima.org\n• Website: https://www.poornima.org/\n• Campus Location: ISI-2, Poornima Marg, Sitapura, Jaipur, Rajasthan 302022\n• Visit Timings: Monday to Saturday, 10 AM to 4 PM\n\n🎓 For student life/hostel/mess: dsw@poornima.org\n💼 For placements: tpo@poornima.org or call 0141-2770798\n\n📱 Follow us:\nInstagram: https://instagram.com/poornimacolleges\nFacebook: https://facebook.com/PoornimaGroupOfColleges",
-    "admission helpline": "📞 For Admission Queries, call: 099285 55222",
-    "email": "✉️ Email us at: info@poornima.org",
-    "website": "🌐 Visit our official website: https://www.poornima.org/",
-    "campus visit": "🏫 You can visit PIET campus from Monday to Saturday between 10 AM to 4 PM.",
-    "location": "📍 ISI-2, Poornima Marg, Sitapura, Jaipur, Rajasthan 302022",
-    "student support": "📧 For hostel, mess, or student life queries, contact: dsw@poornima.org",
-    "placements office": "📞 For placement-related queries: 0141-2770798 or tpo@poornima.org",
-    "social media": "instagram: https://instagram.com/poornimacolleges \nfacebook: https://facebook.com/PoornimaGroupOfColleges"
-  },
-  "recognition_and_affiliation": {
-    "about": "PIET is a self-financed, non-government college recognized under Section 2(f) of the UGC Act, 1956. It is temporarily affiliated to RTU, Kota and not eligible for Central assistance under Section 12(B)."
-  },
-  "management_body": {
-    "about": "PIET is managed by the Poornima Group of Colleges. It is guided by an advisory board comprising eminent educationists, industrialists, and former bureaucrats:\n• Mr. Shashikant Singhi\n• Dr. S. M. Seth\n• Shri Vinod K. Ladia\n• Shri Inderjeet Khanna\n• Prof. Vijay Pal Singh\n• Prof. Vishwanath Sinha\n• Dr. S. S. Acharya\n• Dr. Kanta Ahuja\n• Padma Bhushan Shri D. R. Mehta"
-  },
-  "leadership": {
-    "principal": "Dr. Dinesh Goyal is the Principal of PIET, an expert in CSE with 24+ years of experience. He holds a PhD and leads initiatives in NEP 2020, research, and accreditations. Email: dinesh.goyal@poornima.org",
-    "registrar_ombudsperson": "Dr. Balwan serves as Registrar and Ombudsperson. He has a PhD in Concrete Technology and strong experience in civil engineering education. Email: registrar.piet@poornima.org",
-    "controller_of_examination": "Dr. Nitin Mukesh Mathur is the Controller of Examination. Contact: 9694729323",
-    "governing_council": "The Governing Council includes experts from academia, industry, RTU, AICTE, and the government. It is chaired by Mr. Anupam Gupta (Celebal Technologies) with Dr. Dinesh Goyal and Dr. Gautam Singh as members."
-  },
-  "departments": {
-    "applied_sciences": "📘 Department of Applied Sciences at PIET:\n\n• Established in 2007 to provide foundational education for first-year B.Tech students.\n• Offers key subjects like Physics, Chemistry, Mathematics, and Communication Skills.\n• Focuses on building analytical skills, scientific mindset, and technical thinking.\n• Faculty includes experienced professors dedicated to student-centric learning.\n• Labs are fully equipped for hands-on learning in science and basic engineering.\n• Encourages 'learning by doing' through student projects and experiments.\n• Lays the academic groundwork for success in all core engineering branches.",
-    "computer_science": "💻 Department of Computer Science and Engineering at PIET:\n\n• Established in 2007, it is one of the largest departments with over 1000 students.\n• Offers B.Tech in CSE with specializations in AI, Data Science, IoT, Cybersecurity, and more.\n• Focuses on practical learning through labs, projects, and internships.\n• Faculty includes PhD holders and industry experts with extensive experience.\n• State-of-the-art labs equipped with latest software and hardware technologies.\n• Regular workshops, hackathons, and coding competitions to enhance skills.\n• Strong placement record with top tech companies recruiting students annually.",
-    "ai_ds": "📘 Department Overview:\n\n• Launched in 2021–22, offering B.Tech in AI & DS with intake of ~480 students.\n• Curriculum integrates AI/ML, big data analytics, statistical methods, NLP, deep learning, computer vision.\n• Chartered to develop ethical, research-driven professionals equipped for domains like healthcare, finance, agriculture.\n• Faculty have published 100+ research papers and secured industry-funded projects.\n• 100% placements in leading IT/AI firms, supported by industry visits, guest lectures, cloud partnership (AWS).\n• State‑of‑the‑art labs (Business Intelligence, NLP, IoMT‑Healthcare) and TCSion‑ERP for transparent academics.\n• Departments hosts ATAL FDPs, organizes ICRACS AI conference, and maintains active Board of Studies.\n• HOD Dr. Budesh Kanwar emphasizes hands‑on learning, innovation, industry alignment, and research excellence.",
-    "iot": "📘 Department Overview:\n\n• Launched in 2023–24 with a B.Tech program in CSE‑IoT (60 seats, AICTE approved, RTU affiliated).\n• Builds an innovation ecosystem at the intersection of CS & Electronics for IoT solutions improving everyday life.\n• Comprises experienced faculty—many with PhDs—and advanced labs including IoT, PCB milling, and digital manufacturing setups.\n• Hosts workshops/FDPs on PCB design, Arduino, CAD, 3D printing, prototyping and Industry 4.0 tools with strong participation.\n• Promotes project exhibitions, research engagement and international R&D exposure through events like ICISRI.\n• Prepares students for digital-age tech careers through hands-on learning, technical seminars and industry partnerships.",
-    "cybersecurity": "📘 Department Overview:\n\n• Established in 2023–24 with B.Tech in CSE-Cybersecurity (60 seats, AICTE approved, RTU affiliated).\n• Focuses on protecting digital assets and networks from cyber threats through advanced security technologies.\n• Faculty includes experts with industry experience and research credentials in cybersecurity.\n• Equipped with state-of-the-art labs for ethical hacking, network security, and digital forensics.\n• Offers hands-on training, workshops, and seminars on latest cybersecurity trends and tools.\n• Collaborates with industry partners to provide real-world exposure and internship opportunities.\n• Prepares students for careers in cybersecurity through practical learning and skill development."
-  },
-  "innovation_research": {
-    "ai_cte_idea_lab": "📘 AICTE IDEA Lab at PIET:\n\n• A national-level innovation lab funded by AICTE to promote creativity, prototyping, and entrepreneurship.\n• Equipped with 3D printers, CNC machines, PCB mills, laser cutters, smart boards, and more.\n• Hosts hackathons, workshops, internships, and school outreach programs throughout the year.\n• Led by Dr. Dinesh Goyal and supported by experienced faculty & technical mentors.\n• PIET teams have won top ranks in national innovation contests and hackathons.\n• Supports startups, IPR filing, and prototype-to-product journeys.\n\n📷 View Lab Image: https://www.piet.poornima.org/PIET_NAAC_SSR/PIET_Gallery/IDEA_LAB/IMG_20230721_140603.jpg",
-    "funding_incubation": "📘 PIET’s funding & incubation initiatives:\n\n• *AICTE IDEA Lab Bootcamp: ₹12.69 Lakh (April 2024) – innovation & entrepreneurship program funded by AICTE.\n• **Smart India Hackathon Finale: ₹11.05 Lakh (Dec 2023) – MoE Innovation Cell sponsored major hackathon.\n• **AU-Small Finance Bank Endowment: ₹7 Lakh to support research and incubation.\n• **PBIC (Business Incubation Centre): Incubates ~35 startups since 2014, offering free co-working space, mentoring, IPR assistance, utilities & startup support. 📷 See PBIC space: https://www.piet.poornima.org/pbic.html\n• **IPR Incentives: Full reimbursement for patent/copyright filing plus rewards up to ₹50,000 upon grant.\n• **Industry Funding & Consultancy*: Over ₹21.7 Lakh received; 15+ papers published with industry; government- & industry-funded labs (MODROB, REDHAT, ORACLE).",
-    "research_development_cell": "📘 Overview:\n\n• Promotes research culture among faculty, students & scholars at PIET.\n• Encourages interdisciplinary collaboration, innovation, and industry-academia partnerships.\n• Provides support for research proposals, publications, patents, and technology transfer.\n• Champions emerging areas like AI, IoT, blockchain, renewable energy, biotech, robotics, smart infrastructure.\n• Hosts workshops, FDPs, conferences & seminars to build research capacity and innovation mindset.",
-    "iic": "1. Established in 2018 under MoE’s IIC (AICTE).\n2. Promotes innovation, startups, IPR, research & entrepreneurship.\n3. Rated 3.5 stars in 2023–24.\n4. Conducted 65+ activities like IPR sessions, UDHBHAV, etc.\n5. Hosted Smart India Hackathon twice; won regional innovation award.\n6. Team: 25 members, 5 mentors, 9 incubation, 5 pre-incubation, 10 IP units.\n7. Key: Dr. Goyal, Dr. Mathur, Dr. Singh, Mr. Natani.",
-    "ipr": "1. Protects patents, copyrights & trademarks.\n2. 100% reimbursement for filing.\n3. Assists in patent drafting & IP filing.\n4. Organizes workshops & training.\n5. 140+ patents published, 10 granted.\n6. Led by expert committee at PIET.",
-    "industry_institute_interaction_practices": "1. Purpose: To make students industry-ready.\n2. Weekly I3 Day: 5–6 hour practical training sessions.\n3. Topics: AWS, Python, ML, CAD, Solar, EVs.\n4. Includes expert talks, workshops, visits, certifications.\n5. 85%+ placement; highest package ₹12 LPA.",
-    "partners_industry_interaction": "📘 PIET collaborates with leading companies, startups, and research institutions to drive innovation, enrich learning, and boost student placements.\n\n• Internship & Project Tie-ups: Industry partners like Upflair, Zeetron, Quantum Bit, and more offer live projects and internships aligned with RTU guidelines.\n• Faculty-Industry Workshops & Conferences: Experts regularly conduct workshops and co-host conferences to bridge academic-industry gaps.\n• Innovation & Incubation: Through PBIC, PIET has incubated 35+ startups and secured AICTE‑CII 'Platinum' rating and 3.5✭ from MoE’s IIC.\n• Industry‑Funded Labs: Hosts labs like AICTE‑MODROB neural network/deep learning, REDHAT, ORACLE, and Rajasthan’s first IDEA Lab.\n• Placements & Achievements: Over 80% placement with average package ₹5.6 LPA; partnerships with TCS, Infosys, Capgemini, Celebal, Byju’s, and more.\n• Research & Funding: Secured ₹21.7 L industry funds, published 15+ industry co-authored papers, and facilitated 150+ company visits and events.\n• Annual Reports & Policy: III‑Cell annual reports available (2018‑19 to 2023‑24); active III policy implemented since 2018.\n• Academic Linkages & MoUs: Strengthened MoUs with companies like Coding Ninjas, City Innovates, Samatrix, and institutes like VIT, Bennett University for internships & research."
-  },
-  "chapters": {
-    "PIET_ISTE_Chapter": "Promotes technical excellence and professional values through workshops, seminars, and national-level student conventions.",
-    "PIET_IEEE_Chapter": "Encourages innovation and research in electrical and electronics engineering via technical events, paper presentations, and industry talks.",
-    "PIET_ACM_Chapter": "Focuses on computing and software development through coding challenges, hackathons, and knowledge-sharing sessions.",
-    "PIET_IETE_Chapter": "Supports students in electronics and telecommunication fields by organizing tech fests, expert lectures, and project showcases.",
-    "Poornima_Electoral_Literacy_Forum": "Educates students about voting rights and democratic responsibilities through awareness drives and campus election simulations."
-  },
-  "accreditation": {
-    "about": "PIET holds multiple prestigious accreditations and rankings: NAAC Grade A (renewed in 2025), NBA accreditation for B.Tech (CE & Civil), ISO certified, and registered under AISHE. It has a QS I‑Gauge Diamond rating, actively participates in NIRF, is ranked 4th in RTU’s QIV Index, and featured in Times Engineering Rankings for academic excellence."
-  },
-  "alumni": {
-    "about": "Poornima Institute Alumni Society (PIAS) – network of 3500+ alumni\nActive Alumni Executive Committee—Shashi Kant Singhi (Chair), Dipti Lodha (Sec), etc.\nSupport students via events, mentoring & career guidance\nRuns a dedicated alumni committee to stay connected\nOrganizes regular alumni interactions, webinars & campus involvement\nKey Alumni: Prachi Sharma (HR Manager, RoboMQ Pvt Ltd), Nilesh Kumawat (Site Engineer, Anukampa Groups), Ankit Kumawat (Sr. Software Engineer, A3logics), Arushi Kataria (DevOps Engineer, Sourcefuse)"
-  }
-}
