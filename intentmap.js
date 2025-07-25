@@ -9,25 +9,39 @@ module.exports = {
   "overview.why_choose_us": ["why piet", "why join", "benefits of piet", "why choose piet"],
   "overview.naac_accreditation": ["naac", "naac grade", "naac status"],
   "overview.nba_accreditation": ["nba", "nba grade", "nba accreditation"],
-  "overview.about_college": ["about college", "college info", "college overview", "know piet","piet","tell me about piet"],
+  "overview.about_college": ["about college", "college info", "college overview", "know piet", "tell me about piet"],
 
   // Academics
+  "academics.attendance_policy": ["minimum attendance required", "attendance rule", "attendance criteria", "is attendance compulsory", " attendance needed", " check attendance", " view attendance in tcs ion", "can i see my attendance online", "attendance percentage rule", " track attendance"],
+
   "academics.about": ["academics", "teaching", "learning", "classes", "academics info"],
 
+   // Hostel Info
+  "hostel_info.about": ["hostel", "ac room", "ojas fest", "hostel fest"],
+  "hostel_info.hostel_fees": ["hostel fees", "room charges", "accommodation cost", "hostel payment"],
+
+  // Transport
+  "transport.transport_fees": ["transport fee","transport fee", "bus fee", "transport charges", "bus fare", "transport cost"],
+  "transport.personal commute": ["own vehicle", "personal transport", "parking", "car"],
+  "transport.about": ["transport", "college bus", "routes", "bus contact", "transport officer"],
+
   // Admission
-  "admission.process": ["admission process", "reap", "how to get in", "admission steps", "jee main admission"],
-  "admission.eligibility": ["eligibility", "who can apply", "criteria", "minimum marks"],
+  "admission.process": ["admission process", "reap", "how to get in", "admission steps", "jee main admission", "addmission process details"],
+  "admission.eligibility": ["eligibility", "who can apply", "criteria", "minimum marks", "minimum percentage"],
   "admission.direct admission": ["direct admission", "spot seat", "vacant seats", "management seat"],
   "admission.counselling procedure": ["counselling", "reap counselling", "choice filling", "seat allotment", "registration process"],
   "admission.last year cut off": ["cutoff", "previous cutoff", "last year cut off", "cut off rank"],
   "admission.important dates": ["important dates", "last date", "reap schedule", "application deadline"],
-  "admission.documents required": ["required documents", "document list", "certificates needed", "what to bring"],
+  "admission.documents required": ["required documents", "document list", "certificates needed"],
   "admission.how to apply": ["how to apply", "apply now", "submit form", "fill application"],
   "admission.admission helpline": ["admission contact", "help number", "helpline", "admission phone"],
-  "admission.about": ["admission info", "about admission", "admission details", "piet admission"],
+  "admission.admission-form steps": ["how to fill the admission form", "steps to apply for admission", "form filling process", "admission form procedure", "guide to fill application form", "steps for online admission", " submit the application form"],
+  "admission.seat matrix": ["seat matrix", "seat distribution", "how many seats are available", "branch wise seat intake", "total seats in computer engineering", " seats for ai and ds", "seat allocation", "category wise seat breakup", "tfws seats available", "state quota seat distribution", "seats for rajasthan students"],
+
+  "admission.about": ["admission info", "about admission", "admission details", "piet admission", "admission"],
 
   // Courses
-  "courses.btech branches": ["btech branches", "engineering programs", "offered courses", "available streams"],
+  "courses.btech branches": ["btech branches", "engineering programs", "offered courses", "available streams","branches","course offered","courses offered"],
   "courses.specializations": ["specializations", "cse specializations", "ai", "iot", "data science", "cybersecurity"],
   "courses.new courses": ["new courses", "new programs", "recently added"],
   "courses.ai ml courses": ["ai ml", "machine learning", "ai course", "ml available"],
@@ -35,16 +49,24 @@ module.exports = {
   "courses.value added courses": ["value added", "extra courses", "certifications", "skill enhancement"],
 
   // Courses Offered (Poornima University)
-  "courses_offered.bcom": ["bcom", "commerce course", "bachelor of commerce"],
-  "courses_offered.bba": ["bba", "management course", "bachelor of business administration"],
-  "courses_offered.mba": ["mba", "postgrad management", "masters business"],
-  "courses_offered.mtech": ["mtech", "masters tech", "postgrad engineering"],
+  "courses_not_offered.about": ["courses not offered", "courses unavailable", "not available courses", "piet courses not offered", "piet does not offer"],
+  "courses_not_offered.bcom": ["bcom", "commerce course", "bachelor of commerce"],
+  "courses_not_offered.bba": ["bba", "management course", "bachelor of business administration"],
+  "courses_not_offered.mba": ["mba", "postgrad management", "masters business"],
+  "courses_not_offered.mtech": ["mtech", "masters tech", "postgrad engineering"],
+  "courses_not_offered.bsc": ["bsc", "science course", "bachelor of science"],
+  "courses_not_offered.bca": ["bca", "computer applications", "bachelor of computer applications"],
+  "courses_not_offered.btech lateral entry": ["btech lateral entry", "lateral entry engineering", "btech direct second year"],
+  "courses_not_offered.btech part time": ["btech part time", "part time engineering", "btech evening classes"],
+  "courses_not_offered.btech distance education": ["btech distance education", "distance learning engineering", "btech online"],
+  "courses_not_offered.btech online": ["btech online", "online engineering degree", "btech virtual classes"],
 
   // Fees
+  "fees.about": ["fee structure", "tuition fee", "full fee", "fee details"],
   "fees.loan_assistance": ["loan", "loan help", "education loan", "loan facility"],
   "fees.payment_options": ["payment", "how to pay", "payment method", "online fee", "installments"],
   "fees.any_hidden_charges": ["hidden charges", "extra fee", "unexpected charges"],
-  "fees.about": ["fees", "fee structure", "tuition fee", "full fee", "fee details"],
+  
 
   // Facilities
   "facilities.mess food": ["mess", "food", "hostel food", "canteen"],
@@ -55,6 +77,10 @@ module.exports = {
   "facilities.medical facilities": ["medical", "clinic", "doctor", "healthcare"],
   "facilities.canteen": ["canteen", "snacks", "food court"],
   "facilities.gym": ["gym", "fitness", "exercise", "workout"],
+  "facilities.differently abled facilities": ["differently abled facilities", "facilities for disabled students", "wheelchair access", " accessible for differently abled", "disabled student support", "ramp and restroom access for disabled", "special facilities for physically challenged students"],
+  "facilities.laundry": ["is laundry available in hostel", "laundry facility", "wash clothes", "provide laundry", "laundry services in campus", "washing clothes in hostel", "hostel laundry support", "clothing washing facility"],
+  "facilities.guest house": ["is there a guest house", "guest house facility for parents", "can parents stay in college", "guest room for visitors", "guest house booking process", "staying options for guardians", "visitor accommodation in campus", "facilities for visiting parents"],
+
   "facilities.about": ["facilities", "infrastructure", "hostels", "labs", "campus services"],
 
   // Campus
@@ -65,10 +91,12 @@ module.exports = {
   "campus.security": ["security", "safety", "cctv", "guards"],
   "campus.environment": ["environment", "greenery", "pollution free", "eco friendly"],
   "campus.visit": ["campus visit", "can i visit", "visit timing", "tour"],
+  "campus.timings": ["college timings", " time does classes start", "when do classes begin", "schedule of college", "college timing in summer and winter", "timings for lectures", "when does college end", "how long is a college day"],
+
   "campus.about": ["about campus", "campus overview", "infrastructure", "campus details"],
 
   // Fest & Events
-  "annual_fest.about": ["aarohan", "annual fest", "college fest", "main fest", "dj night", "celebrity event"],
+  "annual_fest.about": ["aarohan", "annual fest", "college fest", "main fest", "dj night", "celebrity event","celebrities","actor","actress","singer","musician","performer"],
   "events.about": ["events", "tech fest", "hackathon", "competitions", "robo fight", "manthan"],
   "freshers_party.about": ["freshers party", "orientation", "pehla kadam", "welcome party"],
   "farewell_party.about": ["farewell", "goodbye party", "last event", "final year send-off"],
@@ -77,7 +105,7 @@ module.exports = {
   "student_life.clubs and societies": ["clubs", "societies", "student clubs", "activities"],
   "student_life.technical_events": ["tech events", "technical", "hackathon", "robotics"],
   "student_life.cultural_activities": ["cultural", "dance", "music", "drama", "fashion"],
-  "student_life.sports_activities": ["sports", "games", "football", "cricket", "basketball"],
+  "student_life.sports_activities": ["sports","sports facilities", "games", "football", "cricket", "basketball"],
   "student_life.student_council": ["student council", "committee", "leadership group"],
   "student_life.mentorship_programs": ["mentorship", "senior support", "peer mentor", "guidance"],
   "student_life.about": ["student life", "campus life", "engagement", "extracurriculars"],
@@ -88,7 +116,7 @@ module.exports = {
   "placements.top_recruiters": ["top recruiters", "companies visiting", "recruiters list"],
   "placements.highest_package": ["highest package", "max salary", "top offer"],
   "placements.average_package": ["average package", "mean salary", "typical ctc"],
-  "placements.number_of_offers": ["number of offers", "total jobs", "how many offers"],
+  "placements.number_of_offers": ["number of offers", "total jobs", "placement offers"],
   "placements.placement_training": ["placement training", "interview prep", "aptitude training", "mock tests"],
   "placements.internship_support": ["internship", "training", "industrial training", "ppo"],
   "placements.training_modules": ["training modules", "placement support", "resume building", "mock interviews"],
@@ -161,7 +189,20 @@ module.exports = {
   "departments.iot": ["iot department", "internet of things", "iot branch"],
   "departments.cybersecurity": ["cybersecurity", "security department", "cyber dept"],
 
- // Innovation, Research & Entrepreneurship
+  // Faculty
+  "faculty.applied_science": ["applied science faculty", "faculty in applied science", "applied science department strength", " teachers in applied science", "science department faculty"],
+  "faculty.computer_science": ["computer science faculty", "faculty in computer science", "cse department strength", "cs faculty count", "teachers in cse"],
+  "faculty.ai_ds": ["ai faculty", "data science faculty", "faculty in ai ds", "ai ds department strength", "teachers in artificial intelligence"],
+  "faculty.iot": ["iot faculty", "faculty in iot", "internet of things department strength", " teachers in iot", "iot department faculty"],
+
+  //hod
+
+  "hod.applied_science": ["applied science hod name", "hod of department of applied sciences", "applied sciences department head"],
+  "hod.ai_ds": ["ai ds department head", "head of artificial intelligence and data science", "hod for ai ds"],
+  "hod.computer_engineering": ["computer engineering hod name", "hod of computer department", "head of cs department "],
+  "hod.iot": ["iot hod name", "head of internet of things department", "hod of iot department"],
+
+  // Innovation, Research & Entrepreneurship
   "innovation_research.aicte_idea_lab": ["idea lab", "aicte lab", "innovation lab", "3d printer lab"],
   "innovation_research.funding_incubation": ["funding", "incubation", "bootcamp", "research grants"],
   "innovation_research.research_development_cell": ["r&d", "research cell", "publications", "research help"],
@@ -192,14 +233,7 @@ module.exports = {
 
   // Dress Code
   "dress_code.about": ["dress code", "uniform days", "casual dress", "clothing rules"],
-
-  // Hostel Info
-  "hostel_info.about": ["hostel", "hostel fee", "ac room", "oja fest", "hostel fest"],
-
-  // Transport
-  "transport.personal commute": ["own vehicle", "personal transport", "parking", "car"],
-  "transport.about": ["transport", "college bus", "routes", "bus contact", "transport officer"],
-
   // Refund Policy
-  "refund_policy.about": ["refund", "withdraw admission", "fee refund", "cancel admission"]
+  "refund_policy.about": ["refund", "withdraw admission", "fee refund", "cancel admission"],
+
 };

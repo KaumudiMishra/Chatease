@@ -1,3 +1,6 @@
+//enhahance ai wala code
+
+
 require('dotenv').config();
 const express = require('express');
 const bodyParser = require('body-parser');
@@ -5,12 +8,12 @@ const { MessagingResponse } = require('twilio').twiml;
 const admin = require('firebase-admin');
 const axios = require('axios');
 const fs = require('fs');
-const Fuse = require('fuse.js'); // ✅ added
+const Fuse = require('fuse.js');
 
 const app = express();
 app.use(bodyParser.urlencoded({ extended: false }));
 
-// ─── Firebase Setup ────────────────────────────────────────
+// ─── Firebase Setup ─────────────────────────────
 const serviceAccount = require('./serviceAccountKey.json');
 admin.initializeApp({
   credential: admin.credential.cert(serviceAccount),
@@ -18,11 +21,11 @@ admin.initializeApp({
 });
 const db = admin.firestore();
 
-// ─── Load FAQ Data & Intent Map ────────────────────────────
+// ─── Load FAQ & IntentMap ───────────────────────
 const faq = require('./faq.json');
 const intentMap = require('./intentmap');
 
-// ─── Recursively Extract All Nested Keys ───────────────────
+// ─── Extract Nested Keys ────────────────────────
 function extractAllKeys(obj, prefix = '') {
   return Object.keys(obj).flatMap(key => {
     const fullKey = prefix ? `${prefix}.${key}` : key;
@@ -33,46 +36,63 @@ function extractAllKeys(obj, prefix = '') {
 }
 const VALID_KEYS = extractAllKeys(faq);
 
-// ─── Get Answer for Nested Keys ────────────────────────────
+// ─── Nested Answer Getter ───────────────────────
 function getNestedAnswer(obj, path) {
   return path.split('.').reduce((o, key) => (o && o[key] ? o[key] : null), obj);
 }
 
-// ─── Match User Message to Intent Map ──────────────────────
-function getIntentResponse(message) {
-  const lowerMessage = message.toLowerCase();
-
-  for (const [intent, synonyms] of Object.entries(intentMap)) {
-    for (const synonym of synonyms) {
-      if (lowerMessage.includes(synonym.toLowerCase())) {
-        const data = faq[intent];
-        if (!data) continue;
-
-        const subMatch = Object.entries(data).find(([key]) =>
-          lowerMessage.includes(key.toLowerCase())
-        );
-        if (subMatch) return subMatch[1];
-
-        return data.about || null;
-      }
-    }
-  }
-
+function getIntentResponseFromIntentKey(intentKey) {
+  const answer = getNestedAnswer(faq, intentKey);
+  if (typeof answer === 'string') return answer;
+  if (typeof answer === 'object' && answer?.about) return answer.about;
   return null;
 }
 
-// ─── Fuzzy Match via Fuse.js ───────────────────────────────
+// ─── Enhanced Static Intent Match ───────────────
+function getIntentResponse(message) {
+  const lowerMessage = message.toLowerCase();
+  for (const [intent, synonyms] of Object.entries(intentMap)) {
+    for (const synonym of synonyms) {
+      const regex = new RegExp(`\\b${synonym.toLowerCase()}\\b`, 'i');
+      if (regex.test(lowerMessage)) {
+        return getIntentResponseFromIntentKey(intent);
+      }
+    }
+  }
+  return null;
+}
+
+// ─── Keyword Priority Match ─────────────────────
+function keywordPriorityMatch(msg) {
+  const keywords = [
+    { key: 'admission.eligibility', phrases: ['who can apply', 'eligibility', '12th pass'] },
+    { key: 'hostel.fees', phrases: ['hostel fee', 'hostel cost', 'stay charges'] },
+    { key: 'placement.stats', phrases: ['placement record', 'placement stats'] },
+    { key: 'admission.process', phrases: ['admission process', 'how to apply'] },
+  ];
+
+  for (const item of keywords) {
+    for (const phrase of item.phrases) {
+      if (msg.includes(phrase)) {
+        return item.key;
+      }
+    }
+  }
+  return null;
+}
+
+// ─── Fuse.js Fuzzy Match ────────────────────────
 function fuzzyMatchIntent(userMsg) {
   const fuse = new Fuse(VALID_KEYS, {
     includeScore: true,
-    threshold: 0.4,
+    threshold: 0.3,
   });
 
   const results = fuse.search(userMsg);
   return results.length ? results[0].item : null;
 }
 
-// ─── GPT-based Intent Classifier ───────────────────────────
+// ─── GPT Intent Classifier ──────────────────────
 async function classifyIntent(userInput) {
   const prompt = `
 You're an intent classifier. From the list below, return the closest matching key (case-insensitive) based on user input.
@@ -116,46 +136,99 @@ Matched Key (one of above):`.trim();
   }
 }
 
-// ─── Incoming WhatsApp Message Handler ─────────────────────
+// ─── AI Enhancement for Static Response ─────────
+async function enhanceAnswerWithAI(userQuery, faqAnswer) {
+  const prompt = `
+You are an AI assistant for "Poornima Institute of Engineering and Technology (PIET), Jaipur".
+
+Task:
+- Enhance the following response to be more conversational and helpful for a WhatsApp chat.
+- Remeber to properly format and structure the answer.
+- Keep the message factual and aligned with PIET.
+- Do NOT add information that is not present in the original answer.
+- Max 2-3 sentences. Friendly, clear and human-like.
+
+User Query: "${userQuery}"
+Original Answer: "${faqAnswer}"
+Enhanced WhatsApp Reply:`.trim();
+
+  try {
+    const { data } = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'mistralai/mistral-7b-instruct',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 100,
+        temperature: 0.6,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+
+    return data.choices[0].message.content.trim();
+  } catch (err) {
+    console.error("❌ AI enhancement error:", err.message);
+    return faqAnswer;
+  }
+}
+
+// ─── Incoming WhatsApp Handler ──────────────────
 app.post('/incoming', async (req, res) => {
   const twiml = new MessagingResponse();
-  const userMsg = req.body.Body.trim().toLowerCase();
+  const userRawMsg = req.body.Body || '';
+  const userMsg = userRawMsg.toLowerCase().replace(/[^\w\s]/gi, '').trim();
 
   console.log(`📩 Incoming message: "${userMsg}"`);
 
-  const intent = await classifyIntent(userMsg);
+  let intent = keywordPriorityMatch(userMsg);
+
+  if (!intent) intent = await classifyIntent(userMsg);
   console.log(`🧠 Intent Detected: ${intent}`);
 
-  let response = getIntentResponse(userMsg) || getNestedAnswer(faq, intent);
+  let staticResponse =
+    getIntentResponse(userMsg) || getIntentResponseFromIntentKey(intent);
 
-  // 🔍 Try fuzzy match if no match yet
+  let response = staticResponse;
+
+  // ✅ Enhance if static response is found
+  if (staticResponse) {
+    console.log("✨ Enhancing static FAQ answer via AI...");
+    response = await enhanceAnswerWithAI(userRawMsg, staticResponse);
+  }
+
+  // 🔍 Fuzzy fallback if unknown
   if (!response && intent === 'unknown') {
     const fuzzy = fuzzyMatchIntent(userMsg);
     if (fuzzy) {
       console.log(`🧩 Fuzzy matched: ${fuzzy}`);
-      response = getNestedAnswer(faq, fuzzy);
+      const fuzzyAnswer = getIntentResponseFromIntentKey(fuzzy);
+      if (fuzzyAnswer) {
+        response = await enhanceAnswerWithAI(userRawMsg, fuzzyAnswer);
+      }
     }
   }
 
-  // 🤖 GPT fallback
+  // 🤖 GPT fallback response
   if (!response) {
     console.log("⚠ No static or fuzzy match. Using GPT fallback restricted to PIET context.");
-
     try {
       const prompt = `
-      You are a professional chatbot for Poornima Institute of Engineering and Technology (PIET), Jaipur.
+You are a professional chatbot for "Poornima Institute of Engineering and Technology (PIET), Jaipur".
 
-      STRICT INSTRUCTIONS:
-      -  DO NOT answer any question that is NOT about PIET (no fun facts, science, psychology, history, jokes, movies, religion, comparisons).
-      -  ONLY reply if the question is about PIET's admission, fees, hostel, placements, campus life, etc.
-      - If a user asks anything unrelated to PIET, simply respond:
-      "I'm designed to assist with Poornima Institute-related queries only."
+STRICT INSTRUCTIONS:
+- DO NOT answer any question that is NOT about PIET (no fun facts, science, psychology, history, jokes, movies, religion, comparisons).
+- ONLY reply if the question is about PIET's admission, fees, hostel, placements, campus life, etc.
+- If a user asks anything unrelated to PIET, simply respond:
+"I'm designed to assist with Poornima Institute-related queries only."
 
-      DO NOT try to be helpful or polite if the topic is irrelevant. No exceptions.
+DO NOT try to be helpful or polite if the topic is irrelevant. No exceptions.
 
-      User Query: "${userMsg}"
-      Response:`.trim();
-
+User Query: "${userRawMsg}"
+Response:`.trim();
 
       const { data } = await axios.post(
         'https://openrouter.ai/api/v1/chat/completions',
@@ -186,13 +259,19 @@ app.post('/incoming', async (req, res) => {
     }
   }
 
+  // 📝 Debug log
+  fs.appendFileSync(
+    'intent_debug_log.txt',
+    `[${new Date().toISOString()}] User: "${userMsg}"\nIntent: ${intent}\nResponse: ${response}\n\n`
+  );
+
   console.log(`📤 Bot reply: "${response}"`);
   twiml.message(response);
   res.writeHead(200, { 'Content-Type': 'text/xml' });
   res.end(twiml.toString());
 });
 
-// ─── Server Start ───────────────────────────────────────────
+// ─── Start Server ───────────────────────────────
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
   console.log(`🚀 Server running on port ${PORT}`);
