@@ -1,0 +1,38 @@
+:root {
+  --bg-color: #f3f6fc;
+  --text-color: #000;
+  --card-bg: #fff;
+  --input-bg: #fff;
+  --border-color: #ccc;
+  --btn-bg: #1976d2;
+  --btn-text: #fff;
+}
+
+body.dark-mode {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --card-bg: #1e1e1e;
+  --input-bg: #2c2c2c;
+  --border-color: #444;
+  --btn-bg: #333;
+  --btn-text: #fff;
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+/* Add at the bottom of index.css */
+
+:root[data-theme='light'] {
+  --bg: #f9fafb;
+  --text: #111827;
+  --card: white;
+}
+
+:root[data-theme='dark'] {
+  --bg: #1f2937;
+  --text: #f9fafb;
+  --card: #111827;
+}

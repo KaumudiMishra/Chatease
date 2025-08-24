@@ -1,0 +1,99 @@
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  margin: 0;
+  padding: 0;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+input, textarea {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.login-box {
+  background: var(--card-bg);
+}
+
+button[type="submit"] {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+}
+
+.analytics-container {
+
+  padding: 40px 50px;
+  background: var(--bg-color);
+  min-height: 100vh;
+  box-sizing: border-box;
+  transition: margin-left 0.3s ease;
+}
+
+.analytics-container h2 {
+  font-size: 26px;
+  font-weight: 600;
+  color: var(--text-color);
+  margin-bottom: 30px;
+  margin-top: 40px;
+  padding-left: 12px;
+  border-left: 4px solid #6c63ff;
+}
+
+.analytics-container p {
+  font-size: 16px;
+  color: var(--text-color);
+  text-align: center;
+  margin-top: 20px;
+}
+
+.chart-section {
+  background-color: var(--card-bg);
+  padding: 30px;
+  border-radius: 20px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
+  margin-bottom: 50px;
+  transition: box-shadow 0.3s ease, transform 0.2s ease;
+}
+
+.chart-section:hover {
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.recharts-tooltip-wrapper {
+  font-size: 14px;
+  background-color: rgba(255, 255, 255, 0.95) !important;
+  border-radius: 6px !important;
+  padding: 10px !important;
+}
+
+.recharts-default-legend {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+@media screen and (max-width: 992px) {
+  .analytics-container {
+    margin-left: 0;
+    padding: 20px;
+  }
+
+  .analytics-container h2 {
+    font-size: 22px;
+  }
+
+  .chart-section {
+    padding: 20px 15px;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  .analytics-container h2 {
+    font-size: 20px;
+  }
+
+  .chart-section {
+    padding: 15px 10px;
+  }
+}

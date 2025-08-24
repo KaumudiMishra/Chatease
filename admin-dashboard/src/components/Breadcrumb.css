@@ -1,0 +1,24 @@
+.breadcrumb-container {
+  font-size: 0.95rem;
+  margin-bottom: 20px;
+  color: #888;
+  font-family: 'Segoe UI', sans-serif;
+}
+
+.breadcrumb-link {
+  cursor: pointer;
+  color: #1976d2;
+  transition: 0.2s;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
+}
+
+.breadcrumb-separator {
+  margin: 0 6px;
+}
+
+.breadcrumb-current {
+  color: var(--text-color);
+}

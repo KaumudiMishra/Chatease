@@ -1,0 +1,51 @@
+.admin-layout {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Segoe UI', sans-serif;
+  background: #f5f6fa;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #202124;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  padding: 20px 0;
+}
+
+.sidebar-header {
+  font-size: 1.4rem;
+  font-weight: bold;
+  text-align: center;
+  padding: 20px;
+  border-bottom: 1px solid #3c4043;
+}
+
+.sidebar-links {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  padding: 20px;
+}
+
+.sidebar-links a {
+  color: #e8eaed;
+  text-decoration: none;
+  font-size: 1rem;
+  transition: 0.2s ease;
+}
+
+.sidebar-links a:hover {
+  color: #8ab4f8;
+}
+
+.logout-link {
+  margin-top: auto;
+  color: #f28b82;
+}
+
+.admin-main {
+  flex-grow: 1;
+  padding: 40px;
+}

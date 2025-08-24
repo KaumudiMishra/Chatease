@@ -1,0 +1,74 @@
+/* === Notification Bell Wrapper === */
+.notification-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 0 10px;
+  z-index: 1000;
+}
+
+/* === Notification Bell Icon === */
+.notification-icon {
+  font-size: 24px;
+  cursor: pointer;
+  position: relative;
+  color: #333;
+}
+
+/* === Red Notification Count Badge === */
+.notif-count {
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: red;
+  color: white;
+  border-radius: 50%;
+  padding: 2px 6px;
+  font-size: 10px;
+  line-height: 1;
+}
+
+/* === Notification Dropdown === */
+.notification-dropdown {
+  position: absolute;
+  top: 36px;
+  right: 0;
+  width: 260px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 8px;
+  max-height: 300px;
+  overflow-y: auto;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  padding: 10px;
+  display: none; /* Toggle this via JS */
+}
+
+/* === Each Notification Item === */
+.notification-item {
+  border-bottom: 1px solid #eee;
+  padding: 8px 6px;
+  font-size: 14px;
+  color: #444;
+}
+
+.notification-item:last-child {
+  border-bottom: none;
+}
+
+/* === No Notification Text === */
+.no-notifs {
+  padding: 10px;
+  text-align: center;
+  color: #999;
+  font-size: 14px;
+}
+
+/* === Scrollbar Styling (Optional) === */
+.notification-dropdown::-webkit-scrollbar {
+  width: 6px;
+}
+
+.notification-dropdown::-webkit-scrollbar-thumb {
+  background: #ccc;
+  border-radius: 4px;
+}

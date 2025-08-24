@@ -1,0 +1,113 @@
+body {
+  background-color: var(--bg-color);
+  color: var(--text-color);
+  font-family: 'Segoe UI', sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+input, textarea {
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  border: 1px solid var(--border-color);
+}
+
+.login-box {
+  background: var(--card-bg);
+}
+
+button[type="submit"] {
+  background: var(--btn-bg);
+  color: var(--btn-text);
+}
+
+.delete-faq-container {
+  padding: 20px;
+
+  box-sizing: border-box;
+  background-color: var(--bg-color);
+}
+
+h2 {
+  font-size: 1.8rem;
+  margin-bottom: 20px;
+  color: var(--text-color);
+}
+
+.search-input {
+  padding: 10px 12px;
+  font-size: 1rem;
+  margin-bottom: 20px;
+  width: 100%;
+  max-width: 400px;
+  border-radius: 6px;
+  border: 1px solid var(--border-color);
+  background-color: var(--input-bg);
+  color: var(--text-color);
+}
+
+.faq-table {
+  overflow-x: auto;
+  width: 100%;
+}
+
+.faq-table table {
+  width: 100%;
+  border-collapse: collapse;
+  background: var(--card-bg);
+  min-width: 600px;
+}
+
+.faq-table th,
+.faq-table td {
+  border: 1px solid var(--border-color);
+  padding: 10px;
+  text-align: left;
+  color: var(--text-color);
+}
+
+.faq-table tr:hover {
+  background-color: rgba(0, 0, 0, 0.05);
+}
+
+.truncate {
+  max-width: 250px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.delete-btn {
+  background-color: #d93025;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+.delete-btn:hover {
+  background-color: #b1271b;
+}
+
+/* ✅ Responsive */
+@media (max-width: 768px) {
+  .delete-faq-container {
+    margin-left: 0;
+    padding: 15px;
+  }
+
+  .faq-table th,
+  .faq-table td {
+    font-size: 14px;
+    padding: 8px;
+  }
+
+  .faq-table table {
+    min-width: 100%;
+  }
+
+  .truncate {
+    max-width: 150px;
+  }
+}

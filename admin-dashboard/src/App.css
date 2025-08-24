@@ -1,0 +1,166 @@
+/* ===== Root Variables for Light & Dark Themes ===== */
+:root {
+  --font-family: 'Poppins', 'Segoe UI', Tahoma, sans-serif;
+
+  --bg-color: #f3f6fc;
+  --text-color: #000;
+  --card-bg: #fff;
+  --input-bg: #fff;
+  --border-color: #ccc;
+
+  --btn-bg: #1976d2;
+  --btn-text: #fff;
+}
+
+body.dark-mode {
+  --bg-color: #121212;
+  --text-color: #e0e0e0;
+  --card-bg: #1e1e1e;
+  --input-bg: #2c2c2c;
+  --border-color: #444;
+  --btn-bg: #333;
+  --btn-text: #fff;
+
+  background-color: var(--bg-color);
+  color: var(--text-color);
+}
+
+
+
+
+/* ===== Reset & Base ===== */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: var(--font-family);
+  background: linear-gradient(145deg, #430b78, #396591 80%);
+  color: var(--text-color);
+  font-size: 16px;
+  line-height: 1.5;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+.main-content {
+  margin-left: 250px;
+  padding: 20px;
+  background: transparent;
+  
+}
+
+/* ===== Layout Container ===== */
+.layout-container {
+  display: flex;
+  height: 100vh;
+  overflow: hidden;
+}
+
+
+/* ===== Sidebar Links ===== */
+.sidebar h2 {
+  font-size: 1.3rem;
+  margin-bottom: 2rem;
+}
+
+.sidebar a {
+  display: block;
+  color: #ecf0f1;
+  text-decoration: none;
+  margin-bottom: 1rem;
+  transition: 0.3s;
+}
+
+.sidebar a:hover {
+  color: #3498db;
+}
+
+/* ===== Navbar (Sticky Bar) ===== */
+.navbar {
+  width: 100%;
+  padding: 1rem 2rem;
+  background-color: var(--card-bg);
+  border-bottom: 1px solid var(--border-color);
+  margin-bottom: 2rem;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+/* ===== Buttons ===== */
+button {
+  background-color: var(--btn-bg);
+  color: var(--btn-text);
+  padding: 10px 20px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background-color 0.3s ease;
+}
+
+button:hover {
+  background-color: #1565c0;
+}
+
+/* ===== Form Inputs ===== */
+form input,
+form textarea,
+input,
+textarea,
+select {
+  display: block;
+  width: 100%;
+  padding: 0.75rem;
+  margin-bottom: 1rem;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  background-color: var(--input-bg);
+  color: var(--text-color);
+  font-size: 1rem;
+  transition: border-color 0.3s, background-color 0.3s;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: #1976d2;
+  outline: none;
+}
+
+/* ===== Utility Classes ===== */
+.text-center {
+  text-align: center;
+}
+
+.mt-2 {
+  margin-top: 1rem;
+}
+
+.mb-2 {
+  margin-bottom: 1rem;
+}
+
+/* ===== Mobile Responsive Adjustments ===== */
+@media (max-width: 768px) {
+  .sidebar {
+    width: 250px;
+    transform: translateX(-100%);
+    transition: transform 0.3s ease-in-out;
+  }
+
+  .sidebar.open {
+    transform: translateX(0);
+  }
+
+ .main-content {
+  margin-left: 250px;
+  padding: 20px;
+  background: transparent;
+}
+
+  .navbar {
+    padding: 1rem;
+  }
+}

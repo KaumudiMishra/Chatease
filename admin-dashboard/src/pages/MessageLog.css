@@ -1,0 +1,124 @@
+.chat-box {
+  background: #cdcde3;
+  border-radius: 1rem;
+  padding: 1rem;
+  margin-bottom: 2rem;
+  box-shadow: 0 0 12px rgba(0, 0, 0, 0.05);
+}
+
+.chat-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  margin-bottom: 1rem;
+  color: #333;
+}
+
+.chat-scroll {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding-right: 0.5rem;
+}
+
+.chat-bubble {
+  padding: 1rem;
+  border-radius: 0.6rem;
+  font-size: 0.95rem;
+  box-shadow: 0 3px 10px rgba(0, 0, 0, 0.03);
+}
+
+.bot-msg {
+  background: #ebe7bd;
+  border-left: 4px solid #d5e896;
+}
+
+.user-msg {
+  background: #82b6d9;
+  border-left: 4px solid #3b82f6;
+}
+
+.msg-meta {
+  font-size: 0.75rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.chat-summary {
+  background: #f2f4f3;
+  margin-top: 1rem;
+  padding: 0.75rem 1rem;
+  border-left: 4px solid #013020;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+  color: #065f46;
+}
+.message-log-container {
+  padding: 2rem;
+  min-height: 100vh;
+  margin-left: 0px;  /* ✅ Push content to the right of sidebar */
+  background: var(--bg-color);
+  box-sizing: border-box;
+}
+.csv-download-btn {
+  background: linear-gradient(135deg, #6366f1, #7c3aed); /* Indigo to Violet */
+  color: #fff;
+  padding: 0.75rem 1.5rem;
+  font-size: 1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 12px;
+  cursor: pointer;
+  box-shadow: 0 8px 20px rgba(124, 58, 237, 0.25);
+  transition: transform 0.2s ease, box-shadow 0.3s ease;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.csv-download-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(124, 58, 237, 0.35);
+  background: linear-gradient(135deg, #7c3aed, #6366f1); /* Reverse gradient */
+}
+
+.csv-download-btn:active {
+  transform: scale(0.96);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+/* AI Summary Style */
+.ai-summary {
+  background: #e0f7f1;
+  border-left: 4px solid #00a676;
+  color: #055a4e;
+  padding: 0.75rem 1rem;
+  margin-top: 1rem;
+  border-radius: 0.5rem;
+  font-size: 0.92rem;
+}
+
+/* Intent Keyword Summary Style */
+.intent-summary {
+  background: #fef9ec;
+  border-left: 4px solid #fbbf24;
+  color: #92400e;
+  padding: 0.75rem 1rem;
+  margin-top: 0.5rem;
+  border-radius: 0.5rem;
+  font-size: 0.9rem;
+}
+
+/* Intent Keyword Badge */
+.intent-badge {
+  display: inline-block;
+  background-color: #fcd34d;
+  color: #78350f;
+  padding: 0.25rem 0.5rem;
+  margin: 0.25rem 0.4rem 0.25rem 0;
+  border-radius: 0.5rem;
+  font-size: 0.8rem;
+  font-weight: 500;
+}

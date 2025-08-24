@@ -1,0 +1,311 @@
+// ✅ FILE: firebase-connection-guide.js
+
+/**
+ * 🔄 Step-by-step guide to connect this Admin Dashboard to a new Bot and Firebase.
+ *
+ * ⚠️ WARNING: This will clear all existing data.
+ */
+
+/******************************
+ * 1️⃣ Delete Existing Data
+ ******************************/
+// Open Firebase Console > Realtime Database
+// Manually delete the following top-level nodes:
+// - logs
+// - queries
+// - blockedUsers
+// - blockedQueries
+// This will reset your dashboard to a clean state.
+
+/*****************************************
+ * 2️⃣ Update Firebase Credentials
+ *****************************************/
+// FILE: src/firebase.js
+// Replace the config object with your new Firebase project settings
+
+const firebaseConfig = {
+  apiKey: "YOUR_NEW_API_KEY",
+  authDomain: "YOUR_NEW_PROJECT.firebaseapp.com",
+  databaseURL: "https://YOUR_NEW_PROJECT.firebaseio.com",
+  projectId: "YOUR_NEW_PROJECT",
+  storageBucket: "YOUR_NEW_PROJECT.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_APP_ID"
+};
+
+// Also replace the "serviceAccountKey.json" file with the one from your new Firebase project.
+
+/*******************************************
+ * 3️⃣ Connect to a New WhatsApp Bot
+ *******************************************/
+// If you're using a different WhatsApp bot:
+// - Update your webhook to post to this Admin Dashboard backend
+// - Use the same data structure when writing logs/queries to Firebase:
+//
+// ✅ Example format expected by dashboard:
+// logs/{phone}/ -> { message, timestamp, sender }
+// queries/answeredFromFirebase -> { question, answer, timestamp }
+// queries/unanswered -> { question, reason, timestamp }
+// queries/answeredFromGPT -> { question, answer, timestamp }
+
+/*****************************************************
+ * 4️⃣ Update Backend Endpoint (Optional)
+ *****************************************************/
+// FILE: server.js (in your bot project)
+// Change the Firebase credentials there too if bot writes to Firebase directly
+
+/******************************************************
+ * 5️⃣ Done! Dashboard is ready for new bot connection
+ ******************************************************/
+// You can now monitor logs, queries, and analytics on your Admin Panel
+    
+
+// this is server.js code:
+
+
+
+require('dotenv').config();
+const express = require('express');
+const bodyParser = require('body-parser');
+const { MessagingResponse } = require('twilio').twiml;
+const admin = require('firebase-admin');
+const axios = require('axios');
+const fs = require('fs');
+
+const app = express();
+app.use(bodyParser.urlencoded({ extended: false }));
+
+// ✅ Firebase Initialization
+const serviceAccount = require('./serviceAccountKey.json');
+admin.initializeApp({
+  credential: admin.credential.cert(serviceAccount),
+  databaseURL: process.env.FIREBASE_URL,
+});
+const db = admin.database();
+
+// ✅ Load FAQs and Synonyms
+const rawFaq = fs.readFileSync('./faq.json');
+const faqData = JSON.parse(rawFaq);
+const VALID_KEYS = Object.keys(faqData);
+const synonymMap = {};
+for (const key of VALID_KEYS) {
+  (faqData[key].syn || []).forEach(syn => {
+    synonymMap[syn.toLowerCase()] = key;
+  });
+}
+
+// ✅ Banned Keywords
+const bannedKeywords = [/* same array as before */];
+
+// ✅ GPT Intent Classifier
+async function classifyIntent(userInput) {
+  const prompt = `Return exactly ONE word from this list that best fits the user's question.\nIf none match, return \"unknown\".\n${VALID_KEYS.join(', ')}\n\nUser question: \"${userInput}\"\nKeyword:`;
+
+  try {
+    const { data } = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'openai/gpt-4o',
+        messages: [{ role: 'user', content: prompt }],
+        max_tokens: 100,
+        temperature: 0,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const intent = data.choices[0].message.content.trim().toLowerCase();
+    console.log("🧠 GPT intent:", intent);
+    return intent;
+  } catch (err) {
+    console.error('❌ GPT classification error:', err.response?.data || err.message);
+    return 'unknown';
+  }
+}
+
+// ✅ GPT Fallback Answer Generator
+async function getAIReply(prompt) {
+  try {
+    const { data } = await axios.post(
+      'https://openrouter.ai/api/v1/chat/completions',
+      {
+        model: 'mistralai/mistral-7b-instruct',
+        messages: [
+          {
+            role: 'system',
+            content: `You are an assistant of Poornima Institute of Engineering & Technology (PIET), Jaipur. \nYou ONLY answer queries related to this college. If the user asks anything outside this, politely inform them you're limited to Poornima-related queries.`,
+          },
+          { role: 'user', content: prompt }
+        ],
+        max_tokens: 300,
+        temperature: 0.6,
+      },
+      {
+        headers: {
+          Authorization: `Bearer ${process.env.OPENROUTER_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+      }
+    );
+    const reply = data.choices[0].message.content.trim();
+    console.log("🤖 GPT fallback response:", reply);
+    return reply;
+  } catch (err) {
+    console.error('❌ GPT fallback error:', err.response?.data || err.message);
+    return "⚠️ Sorry, I couldn't answer that right now.";
+  }
+}
+
+// ✅ Synonym Matcher
+function matchIntentWithSynonyms(userMsg) {
+  let foundKey = null;
+  let longestMatch = '';
+  for (const [syn, key] of Object.entries(synonymMap)) {
+    const regex = new RegExp(`\\b${syn}\\b`, 'i');
+    if (regex.test(userMsg)) {
+      if (syn.length > longestMatch.length) {
+        longestMatch = syn;
+        foundKey = key;
+      }
+    }
+  }
+  if (foundKey) console.log(`🔁 Synonym fallback matched: ${foundKey}`);
+  return foundKey;
+}
+
+// ✅ Log Message
+function logMessage(phone, message, sender = 'user') {
+  db.ref(`logs/${phone}`).push({ message, timestamp: Date.now(), sender });
+}
+
+// ✅ Webhook
+app.post('/incoming', async (req, res) => {
+  const userMsg = (req.body.Body || '').trim().toLowerCase();
+  const userPhone = req.body.From || 'unknown';
+  const twiml = new MessagingResponse();
+
+  console.log("📩 Incoming:", userMsg);
+  logMessage(userPhone, userMsg, 'user');
+
+  const blockedUsersSnap = await db.ref('blockedUsers').once('value');
+  const blockedUsers = blockedUsersSnap.val() || {};
+  if (blockedUsers[userPhone]) {
+    const blockedMsg = "🚫 You are blocked from using this service by admin.";
+    twiml.message(blockedMsg);
+    logMessage(userPhone, blockedMsg, 'bot');
+    return res.type('text/xml').send(twiml.toString());
+  }
+
+  // ✅ Banned Check
+  const isComparison = bannedKeywords.some(keyword =>
+    userMsg.includes(keyword) && !userMsg.includes("poornima institute")
+  );
+
+  if (isComparison) {
+    const blockMsg = "⚠️ I can assist only with queries related to Poornima Institute of Engineering & Technology (PIET), Jaipur.";
+    console.log("❌ Blocked keyword detected.");
+    twiml.message(blockMsg);
+    logMessage(userPhone, blockMsg, 'bot');
+
+    await db.ref(`blockedQueries/${userPhone}`).push({
+      message: userMsg,
+      reason: 'Blocked keyword detected',
+      timestamp: Date.now(),
+    });
+
+    await db.ref(`queries/unanswered`).push({
+      question: userMsg,
+      timestamp: Date.now(),
+      reason: 'Blocked keyword',
+      botReply: blockMsg
+    });
+
+    return res.type('text/xml').send(twiml.toString());
+  }
+
+  // ✅ GPT + Synonym Matching
+  let intent = await classifyIntent(userMsg);
+  if (!VALID_KEYS.includes(intent)) {
+    intent = matchIntentWithSynonyms(userMsg);
+  }
+
+  if (!intent || intent === 'unknown') {
+    const fallback = await getAIReply(userMsg);
+    twiml.message(fallback);
+    logMessage(userPhone, fallback, 'bot');
+
+    await db.ref(`queries/answeredFromGPT`).push({
+      question: userMsg,
+      answer: fallback,
+      timestamp: Date.now(),
+    });
+
+    await db.ref(`queries/unanswered`).push({
+      question: userMsg,
+      timestamp: Date.now(),
+      reason: 'No valid intent found',
+      botReply: fallback
+    });
+
+    return res.type('text/xml').send(twiml.toString());
+  }
+
+  // ✅ Firebase match
+  try {
+    const snap = await db.ref(intent).once('value');
+    const data = snap.val();
+    const answer = typeof data === 'string' ? data : data?.answer;
+
+    if (answer) {
+      console.log(`✅ Firebase answer found for: ${intent}`);
+      twiml.message(answer);
+      logMessage(userPhone, answer, 'bot');
+
+      await db.ref(`queries/answeredFromFirebase`).push({
+        question: userMsg,
+        answer,
+        timestamp: Date.now(),
+      });
+    } else {
+      console.log("❌ Firebase key found but no answer. Trying GPT...");
+      const fallback = await getAIReply(userMsg);
+      twiml.message(fallback);
+      logMessage(userPhone, fallback, 'bot');
+
+      await db.ref(`queries/answeredFromGPT`).push({
+        question: userMsg,
+        answer: fallback,
+        timestamp: Date.now(),
+      });
+
+      await db.ref(`queries/unanswered`).push({
+        question: userMsg,
+        timestamp: Date.now(),
+        reason: 'No answer in Firebase & fallback used',
+        botReply: fallback
+      });
+    }
+  } catch (err) {
+    console.error('❌ Firebase error:', err);
+    const errMsg = "⚠️ Internal server error. Please try again later.";
+    twiml.message(errMsg);
+    logMessage(userPhone, errMsg, 'bot');
+
+    await db.ref(`queries/unanswered`).push({
+      question: userMsg,
+      timestamp: Date.now(),
+      reason: 'Firebase access error'
+    });
+  }
+
+  return res.type('text/xml').send(twiml.toString());
+});
+
+// ✅ Start Server
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`🚀 Bot server running at http://localhost:${PORT}`);
+});
